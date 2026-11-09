@@ -669,7 +669,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 
     <div class="formcard hidden" id="extNotice">
       <div style="font-weight:800;font-size:16px;margin-bottom:6px">This pool lives on another Elysium DEX</div>
-      <p style="color:var(--muted);font-size:14px;line-height:1.65;margin:0">Earn tracks this pool's reserves, volume and your LP balance here, but its deposits and withdrawals run through that DEX's own router — not Ladder's — so they are not offered on this page.<br/>Pool source: <b id="extDexName"></b> · Factory <span id="extFactory" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px"></span><span id="extSwapNote"></span></p>
+      <p style="color:var(--muted);font-size:14px;line-height:1.65;margin:0"><span id="extMainText">Earn tracks this pool's reserves, volume and your LP balance here, but its deposits and withdrawals run through that DEX's own router — not Ladder's — so they are not offered on this page.</span><br/>Pool source: <b id="extDexName"></b> · Factory <span id="extFactory" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px"></span><span id="extRouterText"></span><span id="extSwapNote"></span></p>
       <div id="extSwapBtnWrap" class="hidden" style="margin-top:12px"><button class="whitebtn" onclick="openSwapForCurrentPool()">Swap these tokens</button></div>
     </div>
 
@@ -1146,9 +1146,11 @@ var MULTICALL = "0xcA11bde05977b3631167028862bE2a173976CA11";
    route through Ladder's router. The other top factories are scanned live
    at load: any pair touching WHYPE or tUSD with live reserves is pulled
    into Markets, badged with its DEX, ranked by reserve value. Deposits and
-   withdrawals on external pools are never offered — those stay with each
-   DEX's own app.
-   Swaps are different: an external factory's pools become swappable here
+   withdrawals on external pools are offered ONLY when that DEX's own
+   router is verified (below) — and then they run exclusively through
+   that DEX's own router, never through Ladder's router into a foreign
+   pair. Factories without a verified router stay view-only.
+   Swaps follow the same rule: an external factory's pools become swappable here
    the moment that DEX's OWN router passes strict on-chain verification —
    router.factory() returns exactly that factory, router.WETH() returns
    the canonical WHYPE, and a live getAmountsOut matches the pair's
@@ -1182,6 +1184,21 @@ var DEX_SOURCES = [
 function dexSrc(id){
   for(var i = 0; i < DEX_SOURCES.length; i++) if(DEX_SOURCES[i].id === id) return DEX_SOURCES[i];
   return DEX_SOURCES[0];
+}
+/* ---- LP routing helpers: which router may touch a pool ----
+   Ladder pools execute through Ladder's router. An external pool may
+   execute ONLY through its own DEX's verified router (dexRouter, set
+   from DEX_SOURCES at load). An external pool with no verified router
+   has no executable router at all — poolRouter() returns null and every
+   deposit/withdraw path must refuse. Funds never route through
+   Ladder's router into another DEX's pair. */
+function isExternalPool(p){ return !!(p && p.dex && p.dex !== "ladder"); }
+function isVerifiedExternal(p){ return !!(isExternalPool(p) && p.dexRouter); }
+function poolCanLp(p){ return !!(p && (!isExternalPool(p) || !!p.dexRouter)); }
+function poolRouter(p){
+  if(!p) return ROUTER;
+  if(isExternalPool(p)) return p.dexRouter || null;
+  return ROUTER;
 }
 var extScanState = { running:false, done:false, found:[], scannedPairs:0, factoriesDone:0, factoriesFailed:0 };
 
@@ -1219,9 +1236,26 @@ function fmtPlain(bi, dec){ /* full precision, no grouping — for input values 
   var intp = s.slice(0, s.length - dec), frac = s.slice(s.length - dec).replace(/0+$/, "");
   return frac ? intp + "." + frac : intp;
 }
+function expandExponential(s){
+  /* Expand "8.7e-11"-style notation to a plain decimal string by shifting
+     the decimal point on the digit string itself — no float math, so a
+     dust amount keeps every digit instead of rounding to 0. Returns the
+     input unchanged when it is not valid exponent notation. */
+  var m = /^(\d*)(?:\.(\d*))?[eE]([+-]?\d+)$/.exec(s);
+  if(!m) return s;
+  var digits = (m[1] || "") + (m[2] || "");
+  if(!digits) return s;
+  var exp = parseInt(m[3], 10);
+  if(!isFinite(exp) || exp > 200 || exp < -200) return s;
+  var point = (m[1] || "").length + exp; /* index in digits where "." goes */
+  if(point <= 0) return "0." + "0".repeat(-point) + digits;
+  if(point >= digits.length) return digits + "0".repeat(point - digits.length);
+  return digits.slice(0, point) + "." + digits.slice(point);
+}
 function parseUnits(str, dec){
   if(str === null || str === undefined) return null;
   str = String(str).trim();
+  if(/[eE]/.test(str)) str = expandExponential(str);
   if(!/^\d*(\.\d*)?$/.test(str) || str === "" || str === ".") return null;
   var parts = str.split("."), intp = parts[0] || "0", frac = parts[1] || "";
   if(frac.length > dec) return null;
@@ -1861,16 +1895,19 @@ function openPool(idx, tab){
   showView("detail");
 }
 function setDetailTab(t){
-  /* Pools from other DEXs are tracked read-only: Earn never routes a
-     deposit or withdrawal through an unverified router, so both panes
-     stay hidden and the source notice shows instead. */
-  if(currentPool && currentPool.dex && currentPool.dex !== "ladder"){
+  /* Pools from other DEXs whose router is NOT verified are tracked
+     read-only: Earn never routes a deposit or withdrawal through an
+     unverified router, so both panes stay hidden and the source notice
+     shows instead. Verified-router external pools (dexRouter set) fall
+     through to the normal panes — execution uses that DEX's own router
+     via poolRouter(), never Ladder's. */
+  if(currentPool && isExternalPool(currentPool) && !currentPool.dexRouter){
     $("tabDeposit").classList.remove("active"); $("tabWithdraw").classList.remove("active");
     $("paneDeposit").classList.add("hidden"); $("paneWithdraw").classList.add("hidden");
     var en0 = $("extNotice"); if(en0) en0.classList.remove("hidden");
     return;
   }
-  var en1 = $("extNotice"); if(en1) en1.classList.add("hidden");
+  var en1 = $("extNotice"); if(en1) en1.classList.toggle("hidden", !isExternalPool(currentPool));
   $("tabDeposit").classList.toggle("active", t === "deposit");
   $("tabWithdraw").classList.toggle("active", t === "withdraw");
   $("paneDeposit").classList.toggle("hidden", t !== "deposit");
@@ -1880,23 +1917,28 @@ function setDetailTab(t){
 }
 function buildDetail(){
   var p = currentPool; if(!p) return;
-  var isExt = !!(p.dex && p.dex !== "ladder");
+  var isExt = isExternalPool(p);
+  var isVerExt = isVerifiedExternal(p);
   var tabsEl = document.querySelector("#view-detail .tabs");
-  if(tabsEl) tabsEl.classList.toggle("hidden", isExt);
+  /* Tabs hide only for unverified external pools; verified-router
+     external pools get the same Deposit / Withdraw tabs as Ladder. */
+  if(tabsEl) tabsEl.classList.toggle("hidden", isExt && !isVerExt);
   var en = $("extNotice");
   if(en){
     en.classList.toggle("hidden", !isExt);
     if(isExt){
       $("extDexName").textContent = p.dexName || "";
       $("extFactory").textContent = p.dexFactory || "";
-      /* Swaps follow the router, not the LP panes: when this DEX's own
-         router is verified, the pool's tokens trade in the Swap view
-         through that router — say so, and offer the jump. */
+      var mt = $("extMainText"), rt = $("extRouterText");
       var sn = $("extSwapNote"), sb = $("extSwapBtnWrap");
-      if(p.dexRouter){
-        if(sn) sn.innerHTML = "<br/>Swaps do run here: this DEX's router passed Earn's on-chain verification, so this pool's tokens trade in the Swap tab through that router.";
+      if(isVerExt){
+        if(mt) mt.textContent = "Earn tracks this pool's reserves, volume and your LP balance here. Deposits and withdrawals for this pool run through that DEX's own verified router — not Ladder's — and are offered below through that router.";
+        if(rt) rt.innerHTML = ' · Router <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + esc(p.dexRouter) + '</span>';
+        if(sn) sn.innerHTML = "<br/>Swaps also run here: this DEX's router passed Earn's on-chain verification, so this pool's tokens trade in the Swap tab through that router.";
         if(sb) sb.classList.remove("hidden");
       } else {
+        if(mt) mt.textContent = "Earn tracks this pool's reserves, volume and your LP balance here, but its deposits and withdrawals run through that DEX's own router — not Ladder's — so they are not offered on this page.";
+        if(rt) rt.innerHTML = "";
         if(sn) sn.innerHTML = "<br/>Swaps are not offered for this pool either — Earn could not verify that DEX's router on-chain, so its tokens are view-only here.";
         if(sb) sb.classList.add("hidden");
       }
@@ -1909,14 +1951,14 @@ function buildDetail(){
     '<div class="addr">Pair <a href="' + EXPLORER + '/address/' + p.pair + '" target="_blank" rel="noopener">' + esc(p.pair) + ' ↗</a> · Pool on ' + esc(p.dexName || "Ladder") + '</div></div></div>' +
     '<button class="walletbtn" onclick="refreshDetail(true)">↻ Refresh</button></div>' +
     '<div class="dgrid">' +
-    '<div class="dstat"><div class="l">Reserves</div><div class="v">' + fmtUnits(p.r0, p.dec0) + ' <small>' + esc(dispSym(p,0)) + '</small><br/>' + fmtUnits(p.r1, p.dec1) + ' <small>' + esc(dispSym(p,1)) + '</small></div></div>' +
+    '<div class="dstat"><div class="l">Reserves</div><div class="v">' + ((typeof poolIsDust === "function" && poolIsDust(p)) ? fmtExact(p.r0, p.dec0) : fmtUnits(p.r0, p.dec0)) + ' <small>' + esc(dispSym(p,0)) + '</small><br/>' + ((typeof poolIsDust === "function" && poolIsDust(p)) ? fmtExact(p.r1, p.dec1) : fmtUnits(p.r1, p.dec1)) + ' <small>' + esc(dispSym(p,1)) + '</small></div></div>' +
     '<div class="dstat"><div class="l">Your LP balance</div><div class="v">' + (p.lpBal !== null && p.lpBal !== undefined ? fmtUnits(p.lpBal, 18) + ' <small>LP</small>' : '<small>Connect a wallet</small>') + '</div></div>' +
     '<div class="dstat"><div class="l">Your share</div><div class="v">' + (sp !== null ? sp.toFixed(2) + '%' : '—') + '</div></div>' +
     '<div class="dstat"><div class="l">Your pooled amounts</div><div class="v">' + (p.lpBal > 0n ? fmtUnits(underlying(p,0), p.dec0) + ' <small>' + esc(dispSym(p,0)) + '</small><br/>' + fmtUnits(underlying(p,1), p.dec1) + ' <small>' + esc(dispSym(p,1)) + '</small>' : '—') + '</div></div>' +
     '</div>';
   $("depInputs").innerHTML = [0,1].map(function(idx){
     var b = balOf(p, idx), dec = idx===0 ? p.dec0 : p.dec1;
-    return '<div class="amtbox"><div class="row1"><input id="depAmt' + idx + '" type="number" step="any" min="0" placeholder="0.0" oninput="onDepInput(' + idx + ')" /><span class="toksym">' + esc(dispSym(p, idx)) + '</span></div>' +
+    return '<div class="amtbox"><div class="row1"><input id="depAmt' + idx + '" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0.0" oninput="onDepInput(' + idx + ')" /><span class="toksym">' + esc(dispSym(p, idx)) + '</span></div>' +
       '<div class="row2"><span>Balance: ' + (account ? fmtUnits(b, dec) + ' ' + esc(dispSym(p, idx)) : '— connect wallet') + '</span><button class="maxbtn" onclick="depMax(' + idx + ')">MAX</button></div></div>';
   }).join("");
   updateDepRatioUI();
@@ -1958,18 +2000,63 @@ function depMax(idx){
    deriving both minimums from them (1000 / 1000 into a ~109067 : 91709
    pool: the router's optimal second side is ~840.85, below the 995
    minimum the old code set, so every such deposit reverted). The fields
-   below are therefore ratio-locked on live pools, minimums are computed
-   from the router-optimal amounts, and the exact call is simulated with
-   eth_call before the wallet is ever asked to send it. A brand-new pool
-   (zero reserves) has no ratio to lock to — the depositor sets the
-   initial price, so both sides stay free there. */
+   below are therefore ratio-locked on every existing pool, minimums are
+   computed from the router-optimal amounts, and the exact call is
+   simulated with eth_call before the wallet is ever asked to send it.
+   Free entry — the depositor sets the initial price — applies ONLY to a
+   pair whose reserves are BOTH exactly zero (it has never had
+   liquidity). A pool holding dust reserves is NOT a new pool: the
+   router's _addLiquidity still quotes against those dust reserves and
+   rejects any other ratio, so dust pools stay ratio-locked on their
+   actual live reserves like any other existing pool (standard router
+   path — no direct-mint reseed). Live case: the dex-25aa NVDAx/HYPE
+   pair holds ~8.7e-11 NVDAx and ~1 WHYPE; depositing there means
+   following that ratio, so almost all of the value deposited is the
+   WHYPE side and only a dust amount of NVDAx is taken. */
 function poolLive(p){
   return !!(p && p.r0 !== null && p.r0 !== undefined && p.r1 !== null && p.r1 !== undefined && p.r0 > 0n && p.r1 > 0n);
 }
+/* Brand-new pool: BOTH reserves exactly zero, nothing else qualifies.
+   Dust reserves, a dust LP supply, or a single zero reserve do NOT make
+   a pool new — the router still enforces a ratio (or reverts) there. */
+function poolIsNew(p){
+  if(!p || p.r0 === null || p.r0 === undefined || p.r1 === null || p.r1 === undefined) return false;
+  return p.r0 === 0n && p.r1 === 0n;
+}
+/* Dust detection — used ONLY to pick the honest explanatory wording,
+   never to unlock the ratio. A pool is a dust pool when it is not a
+   brand-new pool and either reserve is dust-sized or its LP total
+   supply is dust, while the other reserve is non-zero. Thresholds are
+   in human token units: a reserve below 1e-6 of a token, or LP supply
+   below 1e-3, is dust. */
+function poolIsDust(p){
+  if(!p || poolIsNew(p)) return false;
+  if(p.r0 === null || p.r0 === undefined || p.r1 === null || p.r1 === undefined) return false;
+  if(p.r0 === 0n && p.r1 === 0n) return false;
+  try {
+    var h0 = parseFloat(fmtPlain(p.r0, p.dec0)), h1 = parseFloat(fmtPlain(p.r1, p.dec1));
+    if(isFinite(h0) && h0 > 0 && h0 < 0.000001) return true;
+    if(isFinite(h1) && h1 > 0 && h1 < 0.000001) return true;
+    if((p.r0 === 0n) !== (p.r1 === 0n)) return true;
+    if(p.totalSupply !== null && p.totalSupply !== undefined && p.totalSupply > 0n){
+      var hs = parseFloat(fmtPlain(p.totalSupply, 18));
+      if(isFinite(hs) && hs < 0.001 && (p.r0 > 0n || p.r1 > 0n)) return true;
+    }
+  } catch(e){}
+  return false;
+}
+/* Ratio lock applies to every pool with non-zero reserves on BOTH
+   sides — normal pools and dust pools alike. Only a both-zero pair
+   (poolIsNew) has no ratio to lock to. */
+function poolHasRatio(p){ return poolLive(p); }
+/* Full-precision amount for dust contexts: fmtUnits with the token's
+   full decimal count, so a dust amount like 0.000000000087 is shown and
+   previewed exactly instead of rounding to "0" at 4 decimal places. */
+function fmtExact(bi, dec){ return fmtUnits(bi, dec, dec); }
 function routerOptimal(p, a0d, a1d){
   /* Mirrors UniswapV2Router02._addLiquidity: the pair the router will
      actually take for the given desired amounts at the stored reserves. */
-  if(!poolLive(p)) return { a0: a0d, a1: a1d };
+  if(!poolHasRatio(p)) return { a0: a0d, a1: a1d };
   var bOpt = a0d * p.r1 / p.r0;
   if(bOpt <= a1d) return { a0: a0d, a1: bOpt };
   return { a0: a1d * p.r0 / p.r1, a1: a1d };
@@ -1977,24 +2064,56 @@ function routerOptimal(p, a0d, a1d){
 function updateDepRatioUI(){
   var p = currentPool, el = $("ratioHelper");
   if(!el || !p) return;
+  var routerNote = isVerifiedExternal(p) ? ' This deposit runs through ' + esc(p.dexName || "that DEX") + "'s own verified router." : '';
+  /* Brand-new pool — BOTH reserves exactly zero: the only free-entry case. */
+  if(poolIsNew(p)){
+    el.innerHTML = 'This pool has no reserves yet — both reserves are exactly zero, so there is no ratio to match. <b style="color:var(--text)">Your deposit sets the initial price</b> and your share of the pool will be <b style="color:var(--text)">~100%</b>. Enter both amounts freely and double-check them — the ratio between them is the starting price.' + routerNote;
+    var na0 = $("depAmt0") ? parseUnits($("depAmt0").value, p.dec0) : null;
+    var na1 = $("depAmt1") ? parseUnits($("depAmt1").value, p.dec1) : null;
+    if(na0 !== null && na1 !== null && na0 > 0n && na1 > 0n){
+      var nslip = slipVal("dep");
+      el.innerHTML += '<br/>Deposit preview: <b style="color:var(--text)">' + fmtUnits(na0, p.dec0) + ' ' + esc(dispSym(p, 0)) + ' + ' + fmtUnits(na1, p.dec1) + ' ' + esc(dispSym(p, 1)) + '</b> · minimum accepted at ' + nslip + '% slippage: ' + fmtUnits(minOut(na0, nslip), p.dec0) + ' ' + esc(dispSym(p, 0)) + ' / ' + fmtUnits(minOut(na1, nslip), p.dec1) + ' ' + esc(dispSym(p, 1)) + '.';
+    }
+    return;
+  }
+  /* Reserves unreadable or one-sided (one reserve zero, the other not):
+     not a new pool, and no usable ratio can be quoted — never promise
+     free entry here; the pre-flight check decides and explains. */
   if(!poolLive(p)){
-    el.innerHTML = 'This pool has no reserves yet, so there is no ratio to match — your deposit sets the starting price. Enter both amounts freely and double-check them.';
+    if(p.r0 === null || p.r0 === undefined || p.r1 === null || p.r1 === undefined){
+      el.innerHTML = 'Pool reserves could not be read right now, so no ratio can be shown. Refresh the pool before depositing — the pre-flight check will verify the exact call on-chain before anything is sent.' + routerNote;
+    } else {
+      el.innerHTML = 'This pool is not a new pool — it already holds reserves (' + esc(fmtExact(p.r0, p.dec0)) + ' ' + esc(dispSym(p, 0)) + ' · ' + esc(fmtExact(p.r1, p.dec1)) + ' ' + esc(dispSym(p, 1)) + '), so a deposit does <b style="color:var(--text)">not</b> set an initial price. Its reserves are one-sided, so no ratio can be quoted here; the standard router path applies and the pre-flight check will verify the exact call on-chain and explain in plain words if it would be rejected. Nothing is sent if the check fails.' + routerNote;
+    }
     return;
   }
   var s0 = esc(dispSym(p, 0)), s1 = esc(dispSym(p, 1));
+  var dust = poolIsDust(p);
   var r0f = parseFloat(fmtPlain(p.r0, p.dec0)), r1f = parseFloat(fmtPlain(p.r1, p.dec1));
-  var html = 'Live pool ratio: <b style="color:var(--text)">1 ' + s0 + ' ≈ ' + fmtPrice(r1f / r0f) + ' ' + s1 + '</b> · 1 ' + s1 + ' ≈ ' + fmtPrice(r0f / r1f) + ' ' + s0 + '.<br/>Amounts are ratio-locked — typing one side fills the other at this ratio, so the router accepts the pair instead of reverting.';
+  var html;
+  if(dust){
+    html = 'This pool is <b style="color:var(--text)">effectively empty, but it is not new</b> — it holds dust reserves (' + esc(fmtExact(p.r0, p.dec0)) + ' ' + s0 + ' · ' + esc(fmtExact(p.r1, p.dec1)) + ' ' + s1 + '). Deposits here follow the <b style="color:var(--text)">standard router path</b> and <b style="color:var(--text)">must follow the pool\'s current ratio</b> — the router quotes against those dust reserves and rejects any other ratio, so this deposit does not set a new price. Amounts are ratio-locked on the actual live reserves: typing one side fills the other at that ratio, at full precision. Because one side is dust, <b style="color:var(--text)">most of the value you deposit will be the non-dust side</b>, and the dust side taken will be a very small amount. If you type the dust-token side instead, the other side fills with the very large amount that ratio requires, and the normal balance check will stop the deposit if you cannot cover it.' + routerNote +
+      '<br/>Live pool ratio: <b style="color:var(--text)">1 ' + s0 + ' ≈ ' + fmtPrice(r1f / r0f) + ' ' + s1 + '</b> · 1 ' + s1 + ' ≈ ' + fmtPrice(r0f / r1f) + ' ' + s0 + '.';
+  } else {
+    html = 'Live pool ratio: <b style="color:var(--text)">1 ' + s0 + ' ≈ ' + fmtPrice(r1f / r0f) + ' ' + s1 + '</b> · 1 ' + s1 + ' ≈ ' + fmtPrice(r0f / r1f) + ' ' + s0 + '.<br/>Amounts are ratio-locked — typing one side fills the other at this ratio, so the router accepts the pair instead of reverting.';
+  }
   var a0 = $("depAmt0") ? parseUnits($("depAmt0").value, p.dec0) : null;
   var a1 = $("depAmt1") ? parseUnits($("depAmt1").value, p.dec1) : null;
   if(a0 !== null && a1 !== null && a0 > 0n && a1 > 0n){
     var opt = routerOptimal(p, a0, a1), slip = slipVal("dep");
-    html += '<br/>Deposit preview: <b style="color:var(--text)">' + fmtUnits(opt.a0, p.dec0) + ' ' + s0 + ' + ' + fmtUnits(opt.a1, p.dec1) + ' ' + s1 + '</b> · minimum accepted at ' + slip + '% slippage: ' + fmtUnits(minOut(opt.a0, slip), p.dec0) + ' ' + s0 + ' / ' + fmtUnits(minOut(opt.a1, slip), p.dec1) + ' ' + s1 + '.';
+    if(dust){
+      html += '<br/>Deposit preview: <b style="color:var(--text)">' + fmtExact(opt.a0, p.dec0) + ' ' + s0 + ' + ' + fmtExact(opt.a1, p.dec1) + ' ' + s1 + '</b> · minimum accepted at ' + slip + '% slippage: ' + fmtExact(minOut(opt.a0, slip), p.dec0) + ' ' + s0 + ' / ' + fmtExact(minOut(opt.a1, slip), p.dec1) + ' ' + s1 + '. Minimums are taken from the router-optimal amounts above, not from the amounts typed.';
+    } else {
+      html += '<br/>Deposit preview: <b style="color:var(--text)">' + fmtUnits(opt.a0, p.dec0) + ' ' + s0 + ' + ' + fmtUnits(opt.a1, p.dec1) + ' ' + s1 + '</b> · minimum accepted at ' + slip + '% slippage: ' + fmtUnits(minOut(opt.a0, slip), p.dec0) + ' ' + s0 + ' / ' + fmtUnits(minOut(opt.a1, slip), p.dec1) + ' ' + s1 + '.';
+    }
+  } else if(dust && ((a0 !== null && a0 > 0n) || (a1 !== null && a1 > 0n))){
+    html += '<br/>The paired side for that amount rounds to zero at this dust ratio — enter a larger amount on the non-dust side so both sides stay above zero.';
   }
   el.innerHTML = html;
 }
 function onDepInput(idx){
   var p = currentPool; if(!p) return;
-  if(poolLive(p)){
+  if(poolHasRatio(p)){
     var src = $("depAmt" + idx), dst = $("depAmt" + (1 - idx));
     if(src && dst){
       var srcDec = idx === 0 ? p.dec0 : p.dec1, dstDec = idx === 0 ? p.dec1 : p.dec0;
@@ -2013,7 +2132,7 @@ function onDepInput(idx){
   refreshActionButtons();
 }
 function matchRatio(){
-  var p = currentPool; if(!p || !poolLive(p)) return;
+  var p = currentPool; if(!p || !poolHasRatio(p)) return;
   var a0 = parseUnits($("depAmt0").value, p.dec0);
   if(a0 !== null && a0 > 0n){ onDepInput(0); setStatus("depStatus", "Paired amount filled from the live pool ratio.", "ok"); return; }
   var a1 = parseUnits($("depAmt1").value, p.dec1);
@@ -2050,14 +2169,25 @@ function revertText(e){
 function plainSimReason(e, p){
   var raw = revertText(e), m = raw || "";
   var s0 = esc(dispSym(p, 0)), s1 = esc(dispSym(p, 1));
-  if(/INSUFFICIENT_B_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s1 + " than the minimum set for it (INSUFFICIENT_B_AMOUNT). The form re-matches both sides to the live ratio; review the preview and try again.";
-  if(/INSUFFICIENT_A_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s0 + " than the minimum set for it (INSUFFICIENT_A_AMOUNT). The form re-matches both sides to the live ratio; review the preview and try again.";
+  if(/INSUFFICIENT_B_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s1 + " than the minimum set for it (INSUFFICIENT_B_AMOUNT). " + (typeof poolIsDust === "function" && poolIsDust(p) ? "This pool holds dust reserves, and those dust reserves still set the ratio the router enforces on-chain — deposits must follow that ratio, so a deposit at any other ratio is rejected. The form ratio-locks both sides to the live reserves; review the preview and try again. Nothing was sent." : "The form re-matches both sides to the live ratio; review the preview and try again.");
+  if(/INSUFFICIENT_A_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s0 + " than the minimum set for it (INSUFFICIENT_A_AMOUNT). " + (typeof poolIsDust === "function" && poolIsDust(p) ? "This pool holds dust reserves, and those dust reserves still set the ratio the router enforces on-chain — deposits must follow that ratio, so a deposit at any other ratio is rejected. The form ratio-locks both sides to the live reserves; review the preview and try again. Nothing was sent." : "The form re-matches both sides to the live ratio; review the preview and try again.");
   if(/EXPIRED/i.test(m)) return "the 20-minute deadline had already passed when the check ran. Nothing was sent — try again and confirm promptly in your wallet.";
   if(/TRANSFER_FROM_FAILED|transfer amount exceeds|insufficient allowance|allowance/i.test(m)) return "the router cannot pull the tokens yet — an approval above is still missing, or a balance is short. Approve both tokens first, check your balances, then deposit.";
   if(/INSUFFICIENT_LIQUIDITY/i.test(m)) return "the pool does not have enough liquidity for a deposit at these amounts. Try a smaller amount.";
   if(/insufficient funds/i.test(m)) return "your wallet balance cannot cover this deposit plus gas. Lower the amount and try again.";
   if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the testnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
   return "the router rejected this deposit in a pre-flight check (" + esc(raw ? raw.slice(0, 140) : "unknown revert") + "). Nothing was sent. Check the amounts and approvals, then try again.";
+}
+function plainWdSimReason(e, p){
+  var raw = revertText(e), m = raw || "";
+  if(/EXPIRED/i.test(m)) return "the 20-minute deadline had already passed when the check ran. Nothing was sent — try again and confirm promptly in your wallet.";
+  if(/TRANSFER_FROM_FAILED|transfer amount exceeds|insufficient allowance|allowance/i.test(m)) return "the router cannot pull your LP tokens yet — the LP approval above is still missing, or your LP balance is short. Approve the LP tokens first, check your balance, then withdraw.";
+  if(/INSUFFICIENT_LIQUIDITY_BURNED/i.test(m)) return "withdrawing that LP amount would return less than the minimum set for it at the current pool ratio (INSUFFICIENT_LIQUIDITY_BURNED). Try a smaller amount or a higher slippage tolerance.";
+  if(/INSUFFICIENT_LIQUIDITY/i.test(m)) return "the pool does not have enough liquidity for a withdrawal at this amount. Try a smaller amount.";
+  if(/INSUFFICIENT_A_AMOUNT|INSUFFICIENT_B_AMOUNT/i.test(m)) return "the pool moved, so the withdrawal would return less than the minimum set at your slippage tolerance. Try again, or raise the slippage tolerance slightly.";
+  if(/insufficient funds/i.test(m)) return "your wallet balance cannot cover the gas for this withdrawal. Top up native HYPE for gas and try again.";
+  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the testnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
+  return "the router rejected this withdrawal in a pre-flight check (" + esc(raw ? raw.slice(0, 140) : "unknown revert") + "). Nothing was sent. Check the amount and the LP approval, then try again.";
 }
 function slipVal(which){
   var custom = $(which === "dep" ? "depSlipCustom" : "wdSlipCustom").value;
@@ -2088,8 +2218,8 @@ $("wdChips").querySelectorAll("button").forEach(function(b){
 });
 
 /* ================= Approvals / actions ================= */
-async function allowanceOf(tokenAddr){
-  var hex = await ethCall(tokenAddr, encCall(SEL.allowance, [{ t:"address", v: account }, { t:"address", v: ROUTER }]));
+async function allowanceOf(tokenAddr, spender){
+  var hex = await ethCall(tokenAddr, encCall(SEL.allowance, [{ t:"address", v: account }, { t:"address", v: spender || ROUTER }]));
   return decUint(hex, 0);
 }
 function refreshActionButtons(){
@@ -2103,7 +2233,7 @@ function refreshActionButtons(){
     /* Approvals cover what the router will actually pull — the
        router-optimal (ratio-matched) amounts, not the raw desired ones. */
     var n0 = a0, n1 = a1;
-    if(a0 !== null && a1 !== null && a0 > 0n && a1 > 0n && poolLive(p)){ var ro = routerOptimal(p, a0, a1); n0 = ro.a0; n1 = ro.a1; }
+    if(a0 !== null && a1 !== null && a0 > 0n && a1 > 0n && poolHasRatio(p)){ var ro = routerOptimal(p, a0, a1); n0 = ro.a0; n1 = ro.a1; }
     if(n0 !== null && n0 > 0n && !isHype(p.token0)) need.push({ addr:p.token0, amt:n0, sym:dispSym(p,0), dec:p.dec0 });
     if(n1 !== null && n1 > 0n && !isHype(p.token1)) need.push({ addr:p.token1, amt:n1, sym:dispSym(p,1), dec:p.dec1 });
     da.innerHTML = '<div id="depApproveWrap"></div><button class="bigbtn" onclick="doDeposit()">Deposit</button>';
@@ -2116,13 +2246,15 @@ function refreshActionButtons(){
 async function checkDepApprovals(need){
   var wrap = $("depApproveWrap"); if(!wrap) return;
   wrap.innerHTML = "";
+  var spender = poolRouter(currentPool);
+  if(!spender) return;
   for(var i=0;i<need.length;i++){
     try {
-      var al = await allowanceOf(need[i].addr);
+      var al = await allowanceOf(need[i].addr, spender);
       if(al < need[i].amt && $("depApproveWrap")){
         var btn = document.createElement("button");
         btn.className = "bigbtn ghost"; btn.textContent = "Approve " + need[i].sym + " (" + fmtUnits(need[i].amt, need[i].dec) + ")";
-        (function(n){ btn.onclick = function(){ doApprove(n.addr, n.amt, "depStatus", refreshActionButtons); }; })(need[i]);
+        (function(n, sp){ btn.onclick = function(){ doApprove(n.addr, n.amt, "depStatus", refreshActionButtons, sp); }; })(need[i], spender);
         wrap.appendChild(btn);
       }
     } catch(e){}
@@ -2133,12 +2265,14 @@ async function checkWdApproval(){
   wrap.innerHTML = "";
   var amt = parseUnits($("wdAmount").value, 18);
   if(amt === null || amt === 0n) return;
+  var spender = poolRouter(currentPool);
+  if(!spender) return;
   try {
-    var hex = await ethCall(currentPool.pair, encCall(SEL.allowance, [{ t:"address", v: account }, { t:"address", v: ROUTER }]));
+    var hex = await ethCall(currentPool.pair, encCall(SEL.allowance, [{ t:"address", v: account }, { t:"address", v: spender }]));
     if(decUint(hex, 0) < amt){
       var btn = document.createElement("button");
       btn.className = "bigbtn ghost"; btn.textContent = "Approve LP tokens";
-      btn.onclick = function(){ doApprove(currentPool.pair, amt, "wdStatus", refreshActionButtons); };
+      btn.onclick = function(){ doApprove(currentPool.pair, amt, "wdStatus", refreshActionButtons, spender); };
       wrap.appendChild(btn);
     }
   } catch(e){}
@@ -2159,11 +2293,11 @@ async function waitReceipt(hash){
   }
   throw new Error("Timed out waiting for confirmation — check the explorer link.");
 }
-async function doApprove(tokenAddr, amount, statusId, done){
+async function doApprove(tokenAddr, amount, statusId, done, spender){
   if(!walletProvider){ setStatus(statusId, "Connect your wallet first.", "info"); return; }
   setStatus(statusId, "Approval requested — confirm it in your wallet. Exact amount only, no unlimited approval.", "info");
   try {
-    var hash = await sendTx(tokenAddr, encCall(SEL.approve, [{ t:"address", v: ROUTER }, { t:"uint", v: amount }]));
+    var hash = await sendTx(tokenAddr, encCall(SEL.approve, [{ t:"address", v: spender || ROUTER }, { t:"uint", v: amount }]));
     setStatus(statusId, "Approval sent: " + txLink(hash) + " — waiting for confirmation…", "info");
     await waitReceipt(hash);
     setStatus(statusId, "Approved. Tx " + txLink(hash), "ok");
@@ -2172,6 +2306,8 @@ async function doApprove(tokenAddr, amount, statusId, done){
 }
 async function doDeposit(){
   var p = currentPool; if(!p || !walletProvider) return;
+  var router = poolRouter(p);
+  if(!router){ setStatus("depStatus", "Deposits are not offered for this pool — Earn could not verify that DEX's router on-chain, so it stays view-only here.", "err"); return; }
   var a0d = parseUnits($("depAmt0").value, p.dec0), a1d = parseUnits($("depAmt1").value, p.dec1);
   if(a0d === null || a1d === null || a0d === 0n || a1d === 0n){ setStatus("depStatus", "Enter an amount for both tokens — for a live pool, typing one side fills the other at the pool ratio.", "err"); return; }
   /* Router-optimal amounts: the ratio-matched pair the router will
@@ -2208,11 +2344,11 @@ async function doDeposit(){
      reads through): if it would revert, the reason is shown here in plain
      words and the wallet is never asked to submit a failing transaction. */
   setStatus("depStatus", "Checking this deposit on-chain before sending…", "info");
-  try { await simulateCall(ROUTER, data, valueHex); }
+  try { await simulateCall(router, data, valueHex); }
   catch(simErr){ setStatus("depStatus", "Deposit not sent — " + plainSimReason(simErr, p), "err"); return; }
   setStatus("depStatus", "Check passed — deposit requested, confirm it in your wallet.", "info");
   try {
-    var hash = await sendTx(ROUTER, data, valueHex);
+    var hash = await sendTx(router, data, valueHex);
     setStatus("depStatus", "Deposit sent: " + txLink(hash) + " — waiting for confirmation…", "info");
     await waitReceipt(hash);
     recordActivity({ ts: Date.now(), type:"Deposit", pair: p.pair, sym0: dispSym(p,0), sym1: dispSym(p,1), dec0: p.dec0, dec1: p.dec1, amt0: opt.a0.toString(), amt1: opt.a1.toString(), hash: hash });
@@ -2237,30 +2373,37 @@ function updateWithdrawEst(){
 }
 async function doWithdraw(){
   var p = currentPool; if(!p || !walletProvider) return;
+  var router = poolRouter(p);
+  if(!router){ setStatus("wdStatus", "Withdrawals are not offered for this pool — Earn could not verify that DEX's router on-chain, so it stays view-only here.", "err"); return; }
   var amt = parseUnits($("wdAmount").value, 18);
   if(amt === null || amt === 0n){ setStatus("wdStatus", "Enter an LP amount to withdraw.", "err"); return; }
   if(p.lpBal !== null && p.lpBal !== undefined && amt > p.lpBal){ setStatus("wdStatus", "Insufficient LP balance.", "err"); return; }
+  if(!p.totalSupply || p.totalSupply === 0n){ setStatus("wdStatus", "This pool has no LP supply to withdraw against. Refresh the pool and try again.", "err"); return; }
   var slip = slipVal("wd");
   var deadline = BigInt(Math.floor(Date.now()/1000) + 20*60);
   var o0 = p.r0 * amt / p.totalSupply, o1 = p.r1 * amt / p.totalSupply;
-  setStatus("wdStatus", "Withdrawal requested — confirm it in your wallet.", "info");
+  var wdata;
+  if(isHype(p.token0) || isHype(p.token1)){
+    var otherAddr = isHype(p.token0) ? p.token1 : p.token0;
+    var oOther = isHype(p.token0) ? o1 : o0, oHype = isHype(p.token0) ? o0 : o1;
+    wdata = encCall(SEL.removeLiquidityETH, [
+      { t:"address", v: otherAddr }, { t:"uint", v: amt },
+      { t:"uint", v: minOut(oOther, slip) }, { t:"uint", v: minOut(oHype, slip) },
+      { t:"address", v: account }, { t:"uint", v: deadline }]);
+  } else {
+    wdata = encCall(SEL.removeLiquidity, [
+      { t:"address", v: p.token0 }, { t:"address", v: p.token1 }, { t:"uint", v: amt },
+      { t:"uint", v: minOut(o0, slip) }, { t:"uint", v: minOut(o1, slip) },
+      { t:"address", v: account }, { t:"uint", v: deadline }]);
+  }
+  /* Pre-flight simulation of the exact call, through this pool's own
+     router: a would-be revert is explained here and never sent. */
+  setStatus("wdStatus", "Checking this withdrawal on-chain before sending…", "info");
+  try { await simulateCall(router, wdata); }
+  catch(simErr){ setStatus("wdStatus", "Withdrawal not sent — " + plainWdSimReason(simErr, p), "err"); return; }
+  setStatus("wdStatus", "Check passed — withdrawal requested, confirm it in your wallet.", "info");
   try {
-    var hash;
-    if(isHype(p.token0) || isHype(p.token1)){
-      var otherAddr = isHype(p.token0) ? p.token1 : p.token0;
-      var oOther = isHype(p.token0) ? o1 : o0, oHype = isHype(p.token0) ? o0 : o1;
-      var data = encCall(SEL.removeLiquidityETH, [
-        { t:"address", v: otherAddr }, { t:"uint", v: amt },
-        { t:"uint", v: minOut(oOther, slip) }, { t:"uint", v: minOut(oHype, slip) },
-        { t:"address", v: account }, { t:"uint", v: deadline }]);
-      hash = await sendTx(ROUTER, data);
-    } else {
-      var data2 = encCall(SEL.removeLiquidity, [
-        { t:"address", v: p.token0 }, { t:"address", v: p.token1 }, { t:"uint", v: amt },
-        { t:"uint", v: minOut(o0, slip) }, { t:"uint", v: minOut(o1, slip) },
-        { t:"address", v: account }, { t:"uint", v: deadline }]);
-      hash = await sendTx(ROUTER, data2);
-    }
+    var hash = await sendTx(router, wdata);
     setStatus("wdStatus", "Withdrawal sent: " + txLink(hash) + " — waiting for confirmation…", "info");
     await waitReceipt(hash);
     recordActivity({ ts: Date.now(), type:"Withdraw", pair: p.pair, sym0: dispSym(p,0), sym1: dispSym(p,1), dec0: p.dec0, dec1: p.dec1, amt0: o0.toString(), amt1: o1.toString(), hash: hash });
@@ -2821,7 +2964,7 @@ function renderPortfolio(){
       '<div class="pm"><div class="l">SHARE</div><div class="v">' + (sp !== null ? sp.toFixed(2) + '%' : '—') + '</div></div>' +
       '<div class="pm"><div class="l">POOLED ' + esc(dispSym(p,0)) + '</div><div class="v">' + fmtUnits(underlying(p,0), p.dec0) + '</div></div>' +
       '<div class="pm"><div class="l">POOLED ' + esc(dispSym(p,1)) + '</div><div class="v">' + fmtUnits(underlying(p,1), p.dec1) + '</div></div></div></div>' +
-      ((p.dex && p.dex !== "ladder")
+      ((isExternalPool(p) && !p.dexRouter)
         ? '<button class="wbtn" onclick="openPool(' + idx + ')">View</button></div>'
         : '<button class="wbtn" onclick="openPool(' + idx + ',\'withdraw\')">Withdraw</button></div>');
   });
@@ -2831,7 +2974,7 @@ function renderPortfolio(){
       var idx = pools.indexOf(p);
       html += '<div class="nopos-row"><div class="poolcell"><div class="tokicons"><span class="tok t0">' + esc(dispSym(p,0).slice(0,2).toUpperCase()) + '</span><span class="tok t1">' + esc(dispSym(p,1).slice(0,2).toUpperCase()) + '</span></div>' +
         '<div><div class="poolname">' + esc(dispSym(p,0)) + ' / ' + esc(dispSym(p,1)) + '</div><div style="color:var(--muted2);font-size:12.5px;margin-top:3px">No position in this pool</div></div></div>' +
-        '<span style="flex:1"></span>' + ((p.dex && p.dex !== "ladder")
+        '<span style="flex:1"></span>' + ((isExternalPool(p) && !p.dexRouter)
           ? '<button class="ghostbtn" onclick="openPool(' + idx + ')">View</button></div>'
           : '<button class="ghostbtn" onclick="openPool(' + idx + ',\'deposit\')">Deposit</button></div>');
     });
@@ -3451,7 +3594,7 @@ async function swapCheckApproval(){
       var btn = document.createElement("button");
       btn.className = "bigbtn ghost";
       btn.textContent = "Approve " + swapInTok.sym + " (" + fmtUnits(q.amtIn, swapInTok.dec) + ")";
-      btn.onclick = function(){ doApprove(swapInTok.addr, q.amtIn, "swapStatus", function(){ swapCheckApproval(); }); };
+      btn.onclick = function(){ doApprove(swapInTok.addr, q.amtIn, "swapStatus", function(){ swapCheckApproval(); }, q.src.router); };
       wrap.appendChild(btn);
     }
   } catch(e){}
