@@ -546,7 +546,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 </head>
 <body>
 
-<div class="announce"><svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z"/></svg><span>Ladder Earn is live on Elysium Testnet</span><span class="deadlink" aria-disabled="true">Open the Ladder app<span class="soontag">SOON</span></span></div>
+<div class="announce"><svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z"/></svg><span>Ladder Earn is LIVE ON ELYSIUM MAINNET — aggregator mode: best route across verified Elysium DEXs</span><span class="deadlink" aria-disabled="true">Open the Ladder app<span class="soontag">SOON</span></span></div>
 
 <header class="topbar">
   <div class="brand">
@@ -575,7 +575,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
   </nav>
   <div class="hright">
     <button class="walletbtn" id="walletBtn" onclick="onWalletBtn()"><span>Connect</span></button>
-    <a class="iconbtn" href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener" aria-label="Elysium testnet explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9S9.5 5.6 12 3z"/></svg></a>
+    <a class="iconbtn" href="https://elysiumexplore.com" target="_blank" rel="noopener" aria-label="Elysium mainnet explorer (community)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9S9.5 5.6 12 3z"/></svg></a>
     <a class="iconbtn" href="https://x.com/ladderswap" target="_blank" rel="noopener" aria-label="Ladder on X"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.9 3H21l-6.8 7.8L22.2 21h-6.3l-4.9-6.4L5.4 21H2.2l7.3-8.3L2 3h6.4l4.4 5.9L17.9 3zm-1.1 16.1h1.7L7.6 4.8H5.8l11 14.3z"/></svg></a>
   </div>
 </header>
@@ -585,7 +585,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <div class="mhead">
       <div>
         <h1>Markets</h1>
-        <p>Live pools from the top DEX factories on Elysium testnet — Ladder's own pools first, plus every live HYPE and tUSD pool the other top factories host.</p>
+        <p>Live pools from Elysium mainnet DEX factories — Earn runs aggregator-first: every live HYPE and USDC pool from the verified venue registry, deepest first. Ladder's own pools join here the moment they are deployed on mainnet.</p>
       </div>
       <div class="mstats">
         <div class="mstat"><div class="lbl">Pools live ⓘ</div><div class="val" id="statPools">—</div></div>
@@ -597,7 +597,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       <div class="statcard">
         <div class="clbl">Total deposits ⓘ</div>
         <div class="big" id="tdTotals"><span style="color:var(--muted);font-size:16px">Loading pools…</span></div>
-        <div class="sub">Summed live from pool reserves on Elysium testnet. No USD conversion — there is no price feed on this testnet.</div>
+        <div class="sub">Summed live from pool reserves on Elysium mainnet, valued in HYPE. No USD conversion is shown — there is no usable HYPE/USDC pool on mainnet yet.</div>
         <div class="chartwrap">
           <svg class="spark" id="sparkSvg" viewBox="0 0 560 110" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div class="sub" id="sparkNote" style="margin-top:6px">History builds as you visit — tracked from your visits only.</div>
@@ -618,7 +618,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
         <select class="fselect" id="fAsset" onchange="renderMarkets()">
           <option value="ALL">All Assets</option>
           <option value="HYPE">HYPE</option>
-          <option value="TUSD">tUSD</option>
+          <option value="USDC">USDC</option>
           <option value="LADDER">ladder</option>
         </select>
         <select class="fselect" id="fType" onchange="renderMarkets()">
@@ -643,8 +643,8 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       </div>
     </div>
 
-    <div id="dexSources" style="font-size:12.5px;color:var(--muted);margin:-2px 0 8px;line-height:1.65">Pool sources: Ladder's own factory plus the other top Uniswap V2 factories on Elysium testnet, ranked by pairs created in a full-chain census (6 Nov 2026). Pairs touching HYPE or tUSD are pulled in live from every factory.</div>
-    <div style="font-size:12.5px;color:var(--muted2);margin:-2px 0 10px;line-height:1.65">Volume &amp; fees: last 2,000 blocks · TVL at spot · APR from your tracked fee growth (needs 1h+ of visits)<br/>All figures in tUSD (≈ tUSD at spot), valued from live reserves. Fees = 0.3% of volume. Pool APR = daily swap fees ÷ TVL × 365 — a simple rate, before deductions, not a forecast.</div>
+    <div id="dexSources" style="font-size:12.5px;color:var(--muted);margin:-2px 0 8px;line-height:1.65">Pool sources: the external Uniswap V2 factories from the Elysium mainnet census (9 Nov 2026, snapshot block 3,151,602). Pairs touching HYPE or USDC are pulled in live from every factory.</div>
+    <div style="font-size:12.5px;color:var(--muted2);margin:-2px 0 10px;line-height:1.65">Volume &amp; fees: last 2,000 blocks · TVL at spot · APR from your tracked fee growth (needs 1h+ of visits)<br/>All figures in HYPE, valued from live reserves at each pool's spot (HYPE = 1). Fees = 0.3% of volume. Pool APR = daily swap fees ÷ TVL × 365 — a simple rate, before deductions, not a forecast.</div>
     <div class="tablebox">
       <div class="thead">
         <div>Market</div>
@@ -654,7 +654,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
         <div>Pool APR</div>
         <div></div>
       </div>
-      <div id="poolRows"><div class="skel"><span class="spin"></span> Reading pools from the Elysium testnet…</div></div>
+      <div id="poolRows"><div class="skel"><span class="spin"></span> Reading pools from Elysium mainnet…</div></div>
     </div>
     <div id="marketsErr" class="statusline err"></div>
   </section>
@@ -718,33 +718,33 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <div class="swaplayout">
       <div class="swapexpl">
         <h1>Swap</h1>
-        <p class="lead">Trade tokens right here in Earn. Quotes are read live from the same venue registry the Aggregator compares — every venue whose router Earn has verified on-chain answers here: Ladder's own pools, plus external DEXs that pass the factory / WETH / live-quote checks. Tokens pooled only on factories without a verified router are labelled view-only in the picker, and the panel says exactly why when no route exists.</p>
+        <p class="lead">Trade tokens right here in Earn — aggregator-first on Elysium mainnet. Quotes are read live from the same venue registry the Aggregator compares: every external DEX whose router Earn has verified on-chain answers here (factory / WETH / live-quote checks all passed). Ladder's own venue joins the registry when its contracts are deployed. Tokens pooled only on factories without a verified router are labelled view-only in the picker, and the panel says exactly why when no route exists.</p>
         <div class="swapstats">
           <div class="swapstat"><span>Pools available ⓘ</span><b id="swapStatPools">—</b></div>
           <div class="swapstat"><span>Routes quoted ⓘ</span><b id="swapStatRoutes">—</b></div>
-          <div class="swapstat"><span>Testnet block ⓘ</span><b id="swapStatBlock">—</b></div>
+          <div class="swapstat"><span>Mainnet block ⓘ</span><b id="swapStatBlock">—</b></div>
         </div>
-        <p class="swapnote">The quote you see is the router's own <b>getAmountsOut</b> answer for the best live path — direct, or one hop through HYPE or tUSD. Execution runs through the winning venue's router with a <b><span id="swapExplSlip">0.5</span>% slippage tolerance</b> and a <b>20 minute deadline</b>; nothing moves until you confirm in your wallet.</p>
+        <p class="swapnote">The quote you see is the router's own <b>getAmountsOut</b> answer for the best live path — direct, or one hop through HYPE. Execution runs through the winning venue's router with a <b><span id="swapExplSlip">0.5</span>% slippage tolerance</b> and a <b>20 minute deadline</b>; nothing moves until you confirm in your wallet.</p>
       </div>
       <div>
         <div class="swapconv">
-          <div class="swapconvhead"><span class="ct">Convert</span><span class="maintag">Elysium Testnet</span></div>
+          <div class="swapconvhead"><span class="ct">Convert</span><span class="maintag">Elysium Mainnet</span></div>
           <div class="swapfield">
             <div class="frow1"><span>You pay</span><span id="swapInBal">Balance: —</span></div>
             <div class="frow2">
               <input id="swapAmtIn" type="text" inputmode="decimal" placeholder="0.0" autocomplete="off" oninput="onSwapAmtInput()" />
               <button class="tokpick" id="swapInPick" onclick="openSwapPicker('in')"><span id="swapInSym">HYPE</span><span class="chev2">▾</span></button>
             </div>
-            <div class="frow3"><span id="swapInUsd">≈ — tUSD</span><button class="maxbtn" onclick="swapMax()">MAX</button></div>
+            <div class="frow3"><span id="swapInUsd">≈ — HYPE</span><button class="maxbtn" onclick="swapMax()">MAX</button></div>
           </div>
           <div class="swapflipwrap"><button class="swapflip" onclick="swapFlip()" aria-label="Flip tokens" title="Flip tokens">⇅</button></div>
           <div class="swapfield">
             <div class="frow1"><span>You receive</span><span id="swapOutBal">Balance: —</span></div>
             <div class="frow2">
               <div class="swapoutval dim" id="swapAmtOut">0.0</div>
-              <button class="tokpick" id="swapOutPick" onclick="openSwapPicker('out')"><span id="swapOutSym">tUSD</span><span class="chev2">▾</span></button>
+              <button class="tokpick" id="swapOutPick" onclick="openSwapPicker('out')"><span id="swapOutSym">Select token</span><span class="chev2">▾</span></button>
             </div>
-            <div class="frow3"><span id="swapOutUsd">≈ — tUSD</span><span class="esttag">estimate</span></div>
+            <div class="frow3"><span id="swapOutUsd">≈ — HYPE</span><span class="esttag">estimate</span></div>
           </div>
           <div class="swapwarn hidden" id="swapImpactWarn"></div>
           <div class="swaprate" id="swapRate">Enter an amount to get a live quote.</div>
@@ -759,7 +759,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
             <div class="drow"><span class="l">Minimum received</span><span class="r" id="swapMinVal">—</span></div>
             <div class="drow" id="swapImpactRow"><span class="l">Price impact</span><span class="r" id="swapImpactVal">—</span></div>
             <div class="drow"><span class="l">Liquidity provider fee</span><span class="r" id="swapFeeVal">—</span></div>
-            <div class="drow"><span class="l">Network</span><span class="r">Elysium Testnet</span></div>
+            <div class="drow"><span class="l">Network</span><span class="r">Elysium Mainnet</span></div>
           </div>
           <div id="swapApproveWrap"></div>
           <button class="bigbtn" id="swapGo" onclick="doSwap()">Swap</button>
@@ -784,7 +784,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
           <div class="pf-menu" id="pfMenu">
             <button onclick="refreshAll()">↻&nbsp; Refresh pool data</button>
             <span class="deadlink" aria-disabled="true">Open the Ladder app<span class="soontag">SOON</span></span>
-            <a href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener">Elysium testnet explorer ↗</a>
+            <a href="https://elysiumexplore.com" target="_blank" rel="noopener">Elysium explorer (community) ↗</a>
           </div>
         </div>
       </div>
@@ -800,7 +800,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
             <button data-tf="1Y" onclick="setPfTf('1Y')">1Y</button>
           </div>
         </div>
-        <div class="pf-value" id="pfValue">0<span class="dim">.00</span><span class="pf-unit">≈ tUSD (spot)</span></div>
+        <div class="pf-value" id="pfValue">0<span class="dim">.00</span><span class="pf-unit">≈ HYPE</span></div>
         <div class="dotted pf-chart">
           <svg id="pfChart" viewBox="0 0 560 170" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div class="chart-note hidden" id="pfChartNote">History builds as you visit — drawn only from snapshots saved on your own visits.</div>
@@ -816,9 +816,9 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
         </div>
         <div class="sidecard promo">
           <h3>Ladder Earn is live</h3>
-          <p style="color:var(--muted);font-size:14px;margin:9px 0 3px;font-weight:600">Mainnet on Elysium — November 9</p>
-          <p style="color:var(--muted2);font-size:12.5px;margin:0;line-height:1.6;max-width:250px">Testnet pools are open now. Deposit from Markets to hold a position before mainnet.</p>
-          <div class="discs" aria-hidden="true"><span class="disc" style="background:var(--accent);color:#111111">HY</span><span class="disc" style="background:#262626;color:var(--accent)">tU</span><span class="disc" style="background:#333333;color:#f5f5f5">LD</span></div>
+          <p style="color:var(--muted);font-size:14px;margin:9px 0 3px;font-weight:600">Now live on Elysium Mainnet</p>
+          <p style="color:var(--muted2);font-size:12.5px;margin:0;line-height:1.6;max-width:250px">Aggregator mode: pools from verified Elysium DEXs are open now. Ladder's own pools arrive when they are deployed.</p>
+          <div class="discs" aria-hidden="true"><span class="disc" style="background:var(--accent);color:#111111">HY</span><span class="disc" style="background:#262626;color:var(--accent)">US</span><span class="disc" style="background:#333333;color:#f5f5f5">AG</span></div>
         </div>
       </div>
     </div>
@@ -843,7 +843,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <div class="mhead">
       <div>
         <h1>Vote</h1>
-        <p>Your votes will set the next epoch's LDR emissions and earn that epoch's fees and incentives.</p>
+        <p>Your votes will set the next epoch's $LADDER emissions and earn that epoch's fees and incentives.</p>
         <div style="margin-top:11px"><span class="maintag">Planned for Elysium mainnet</span></div>
       </div>
       <div class="mstats">
@@ -854,12 +854,12 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <div class="dotted vote-chart">
       <span class="epoch-chip">Epoch 1</span>
       <svg viewBox="0 0 560 150" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="118" x2="560" y2="118" stroke="#FFFFFF" stroke-width="2" opacity="0.55"/><circle cx="552" cy="118" r="4" fill="#FFFFFF"/></svg>
-      <div class="chart-note">Epoch 1 opens at mainnet launch</div>
-      <div class="axis"><span>Today</span><span>Mainnet · Nov 9</span></div>
+      <div class="chart-note">Epoch 1 opens when veLDR activates — after $LADDER + Ladder pools</div>
+      <div class="axis"><span>Today</span><span>veLDR launch</span></div>
     </div>
     <div class="roadmap-banner">
-      <div class="rb-t">Voting is not live on testnet</div>
-      <p>Ladder runs on Uniswap V2 contracts today — there are no vote-escrow contracts on Elysium testnet, and nothing on this page can be locked, voted or claimed. The veLDR model below is the planned design for Elysium mainnet. Every figure is a dash and every voting control is disabled until then.</p>
+      <div class="rb-t">Voting is not live yet — veLDR is roadmap</div>
+      <p>Earn is live on Elysium mainnet as an aggregator, but there are no vote-escrow contracts yet: veLDR activates only after the $LADDER token has been created and Ladder's own pools are live, because votes direct emissions to those pools. Nothing on this page can be locked, voted or claimed until then — the veLDR model below is the planned design, and every figure is a dash and every voting control disabled until it ships.</p>
     </div>
     <div class="filters">
       <div class="fleft">
@@ -880,16 +880,16 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     </div>
     <h2 style="font-size:23px;margin:28px 0 14px">How veLDR will work</h2>
     <div class="explgrid">
-      <div class="expl"><div class="expl-t">1 · Lock LDR → veLDR</div><p>Lock LDR for a chosen period to receive veLDR. The longer the lock, the more voting power each LDR carries. veLDR is non-transferable and decays toward the unlock date.</p></div>
+      <div class="expl"><div class="expl-t">1 · Lock $LADDER → veLDR</div><p>Lock $LADDER for a chosen period to receive veLDR. The longer the lock, the more voting power each $LADDER carries. veLDR is non-transferable and decays toward the unlock date.</p></div>
       <div class="expl"><div class="expl-t">2 · Weekly epochs</div><p>Voting runs in weekly epochs. During an epoch, veLDR holders allocate their voting power across the pools they want to support.</p></div>
-      <div class="expl"><div class="expl-t">3 · Votes direct emissions</div><p>Future LDR emissions are planned to flow to pools in proportion to the votes they receive, so liquidity follows what voters actually back.</p></div>
+      <div class="expl"><div class="expl-t">3 · Votes direct emissions</div><p>Future $LADDER emissions are planned to flow to pools in proportion to the votes they receive, so liquidity follows what voters actually back.</p></div>
       <div class="expl"><div class="expl-t">4 · Voters earn</div><p>Pools can attach incentives for voters, and veLDR holders are planned to share in the fees of the pools they vote for.</p></div>
     </div>
     <h2 style="font-size:23px;margin:28px 0 4px">Planned veLDR parameters</h2>
-    <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:780px;line-height:1.65">The veLDR design Ladder will adopt at mainnet, stated in full so the model is fixed before any contract ships. Nothing below is live on testnet.</p>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:780px;line-height:1.65">The veLDR design Ladder will adopt, stated in full so the model is fixed before any contract ships. Nothing below is live yet.</p>
     <div class="explgrid">
-      <div class="expl"><div class="expl-t">Locking</div><p>Lock LDR for 1–104 weeks, or choose Auto-max to keep the lock at full length automatically. veLDR is non-transferable and its power decays toward the unlock date.</p></div>
-      <div class="expl"><div class="expl-t">Voting weight</div><p>Weight = locked LDR × weeks remaining ÷ 105. A fresh 104-week lock starts at nearly full weight; shorter or older locks carry proportionally less.</p></div>
+      <div class="expl"><div class="expl-t">Locking</div><p>Lock $LADDER for 1–104 weeks, or choose Auto-max to keep the lock at full length automatically. veLDR is non-transferable and its power decays toward the unlock date.</p></div>
+      <div class="expl"><div class="expl-t">Voting weight</div><p>Weight = locked $LADDER × weeks remaining ÷ 105. A fresh 104-week lock starts at nearly full weight; shorter or older locks carry proportionally less.</p></div>
       <div class="expl"><div class="expl-t">Epochs</div><p>Voting runs in weekly epochs, Tuesday 00:00 UTC to the next Tuesday. A lock's vote can split across up to 10 markets, persists week to week until changed, and is time-weighted within the week.</p></div>
       <div class="expl"><div class="expl-t">Changing your vote</div><p>The first vote each week is free. Re-votes cost 2.63% of that week's voter income, rising evenly to 50% at the twentieth re-vote.</p></div>
       <div class="expl"><div class="expl-t">What voters earn</div><p>Voters earn the swap fees of staked liquidity in the markets they vote for, plus the claim fee, plus any posted incentives — paid in the token earned. Rewards expire 26 weeks after their week's payout.</p></div>
@@ -898,9 +898,9 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       <div class="expl"><div class="expl-t">Rebase</div><p>A rebase adds 8% of LP emissions to voting locks while 30% or less of supply is locked, sliding to 0% once 90% or more of supply is locked.</p></div>
     </div>
     <div class="lockcard">
-      <div class="expl-t">Lock LDR</div>
-      <div class="amtbox" style="margin-top:12px"><div class="row1"><input type="number" placeholder="0.0" disabled /><span class="toksym">LDR</span></div>
-      <div class="row2"><span>Planned locks run 1–104 weeks, or Auto-max. Locking opens with the mainnet veLDR launch.</span><span class="maintag">Mainnet</span></div></div>
+      <div class="expl-t">Lock $LADDER</div>
+      <div class="amtbox" style="margin-top:12px"><div class="row1"><input type="number" placeholder="0.0" disabled /><span class="toksym">$LADDER</span></div>
+      <div class="row2"><span>Planned locks run 1–104 weeks, or Auto-max. Locking opens when veLDR activates on mainnet.</span><span class="maintag">Mainnet</span></div></div>
       <button class="bigbtn" disabled>Lock — not live yet</button>
     </div>
   </section>
@@ -917,17 +917,17 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       <aside class="an-rail">
         <div class="clbl">Total deposits</div>
         <div class="an-total" id="anTotalBig">—</div>
-        <div class="an-unit">≈ tUSD (spot)</div>
+        <div class="an-unit">≈ HYPE</div>
         <div class="an-now">Now</div>
         <hr class="an-div" />
         <div class="an-row"><span>Change since first tracked visit</span><b id="anChange">—</b></div>
         <div class="an-row"><span>HYPE pairs</span><b id="anCatHype">—</b></div>
         <div class="an-row"><span>Launchpad pairs</span><b id="anCatLaunch">—</b></div>
         <div class="an-row"><span>Other pairs</span><b id="anCatOther">—</b></div>
-        <div class="an-note">Totals sum live pool reserves, converted at the HYPE/tUSD pool's spot price. Categories split by pair composition, so each pool counts once. Change is measured against the first snapshot saved on this device.</div>
+        <div class="an-note">Totals sum live pool reserves, valued in HYPE at each pool's own spot (HYPE = 1) — there is no usable HYPE/USDC pool on mainnet yet, so values are shown in HYPE, not USD. Categories split by pair composition, so each pool counts once. Change is measured against the first snapshot saved on this device.</div>
         <hr class="an-div" />
-        <div class="clbl">LDR token · testnet</div>
-        <div id="ldrBody"><div class="skel" style="padding:14px 0"><span class="spin"></span> Reading the testnet LDR token…</div></div>
+        <div class="clbl">$LADDER token · mainnet</div>
+        <div id="ldrBody"><div class="skel" style="padding:14px 0"><span class="spin"></span> Checking $LADDER on mainnet…</div></div>
       </aside>
       <div class="chart-card">
         <div class="cc-head">
@@ -956,7 +956,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
         <select class="fselect" id="anAsset" onchange="renderAnTable()">
           <option value="ALL">All Assets</option>
           <option value="HYPE">HYPE</option>
-          <option value="TUSD">tUSD</option>
+          <option value="USDC">USDC</option>
           <option value="LADDER">ladder</option>
         </select>
         <select class="fselect" id="anType" onchange="renderAnTable()">
@@ -984,7 +984,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       <div class="cthead"><div>Market</div><div>Price (spot)</div><div class="sortable" onclick="toggleAnSort()" title="Sort by TVL">TVL ⇅</div><div>Volume</div><div>Fees</div><div>Swaps</div><div>Pool APR</div></div>
       <div id="analyticsRows"><div class="skel"><span class="spin"></span> Reading markets…</div></div>
     </div>
-    <div class="roadmap-line">Emissions are part of the planned veLDR model — see the <a href="javascript:void(0)" onclick="showView('vote')">Vote view</a> for how LDR emissions are planned to be directed. No emissions run on testnet today.</div>
+    <div class="roadmap-line">Emissions are part of the planned veLDR model — see the <a href="javascript:void(0)" onclick="showView('vote')">Vote view</a> for how $LADDER emissions are planned to be directed. No emissions run yet — veLDR activates after the $LADDER token and Ladder's own pools exist.</div>
   </section>
 
   <!-- ============ AGGREGATOR ============ -->
@@ -993,7 +993,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
       <div>
         <h1>Aggregator</h1>
         <p>One quote across every Elysium venue — the router compares, the best output wins.</p>
-        <div style="margin-top:11px"><span class="maintag">Live on testnet · verified external routers quote alongside Ladder</span></div>
+        <div style="margin-top:11px"><span class="maintag">Live on Elysium Mainnet · aggregator-first — Ladder's own venue pending deploy</span></div>
       </div>
       <div class="mstats">
         <div class="mstat"><div class="lbl">Venues registered ⓘ</div><div class="val" id="aggStatVenues">—</div></div>
@@ -1003,8 +1003,8 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     </div>
 
     <div class="roadmap-banner">
-      <div class="rb-t">The routing layer is live — verified routers quote side by side</div>
-      <p>Routing never moves another DEX's liquidity; it sends the trade to wherever the pool already is. Every venue sits behind one adapter interface and the quotes below are live on-chain reads. On testnet today two venues answer: Ladder's own V2 router, and DEX 0x25aa…2164 — an external factory whose router passed Earn's on-chain verification (its factory() and WETH() bindings check out, and its live quote matched its pairs' reserve math), so its NVDAx and TSLAx pools swap here through its own router. The other scanned factories stay view-only: one's swap executor exposes no WETH() binding, another's router wraps a non-canonical token, and the rest exposed no candidate router at all. Nest, Dawn and the Uniswap V3 pools remain registered with empty router slots until Elysium mainnet opens (Nov 9) and their addresses are public.</p>
+      <div class="rb-t">The routing layer is live on mainnet — verified routers quote side by side</div>
+      <p>Routing never moves another DEX's liquidity; it sends the trade to wherever the pool already is. Every venue sits behind one adapter interface and the quotes below are live on-chain reads. Earn is aggregator-first on mainnet: Ladder's own contracts are not deployed yet, so four verified external venues answer — DEX 0x7272…1422 (the main venue, 22 WHYPE pairs including the graduated launchpad tokens), DEX 0xc48c…8715, DEX 0xbbbc…5df2 and DEX 0x8cec…48df — each verified on-chain (factory() and WETH() bindings exact against the canonical mainnet WHYPE, quote math matched to the wei, swap simulation passed), each executing through its own router. Seven more factories are tracked view-only: the deepest pool on the chain (DONTBUY/WHYPE) sits on a venue whose only swap contract is nonstandard, and the rest exposed no verifiable standard router. Honest depth warning: total V2 liquidity on mainnet is still thin (~100 HYPE across all factories at the 9 Nov census) and most of the chain's liquidity sits in Uniswap V4 and launchpad curves, outside this V2 adapter — expect price-impact warnings on larger trades.</p>
     </div>
 
     <h2 style="font-size:23px;margin:26px 0 14px">Compare routes</h2>
@@ -1045,21 +1045,21 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 
     <h2 style="font-size:23px;margin:30px 0 14px">How the framework works</h2>
     <div class="explgrid">
-      <div class="expl"><div class="expl-t">1 · Registry</div><p>Every venue is one config entry: name, protocol kind, router and factory addresses, and which adapter speaks to it. Adding a DEX at mainnet means adding an entry — nothing else in the app changes.</p></div>
+      <div class="expl"><div class="expl-t">1 · Registry</div><p>Every venue is one config entry: name, protocol kind, router and factory addresses, and which adapter speaks to it. Adding a DEX — or Ladder itself, once deployed — means adding an entry; nothing else in the app changes.</p></div>
       <div class="expl"><div class="expl-t">2 · Adapters</div><p>Each protocol family gets one adapter behind a single interface — <span style="font-family:ui-monospace,Menlo,monospace">quote(amountIn, path)</span> and <span style="font-family:ui-monospace,Menlo,monospace">buildSwap(quote)</span>. The V2 adapter is live below; V3 and external-fork adapters slot into the same shape.</p></div>
-      <div class="expl"><div class="expl-t">3 · Compare</div><p>All live adapters answer the same request in one batch — direct pairs and multi-hop paths through HYPE or tUSD. The winner is the highest net output after that venue's own swap fees, not the best headline price.</p></div>
-      <div class="expl"><div class="expl-t">4 · Execute &amp; fall back</div><p>The winning quote becomes a swap through that venue's own router in the Swap tab, guarded by the user's slippage tolerance. If a venue's router stalls or reverts, the comparison falls back to the next-best quote — Ladder's own pools are always the floor.</p></div>
+      <div class="expl"><div class="expl-t">3 · Compare</div><p>All live adapters answer the same request in one batch — direct pairs and multi-hop paths through HYPE. The winner is the highest net output after that venue's own swap fees, not the best headline price.</p></div>
+      <div class="expl"><div class="expl-t">4 · Execute &amp; fall back</div><p>The winning quote becomes a swap through that venue's own router in the Swap tab, guarded by the user's slippage tolerance. If a venue's router stalls or reverts, the comparison falls back to the next-best quote.</p></div>
     </div>
 
     <h2 style="font-size:23px;margin:26px 0 14px">A registry entry</h2>
-    <pre class="codeblock"><span class="cm">// one venue = one entry; a mainnet launch is a config change, not a rewrite</span>
+    <pre class="codeblock"><span class="cm">// one venue = one entry; Ladder joining mainnet is a config change, not a rewrite</span>
 {
-  id:      "nest",
-  name:    "Nest",
-  kind:    "v2-fork",          <span class="cm">// adapter family</span>
-  router:  null,               <span class="cm">// ← mainnet address drops in here</span>
+  id:      "ladder",
+  name:    "Ladder",
+  kind:    "v2",               <span class="cm">// adapter family</span>
+  router:  null,               <span class="cm">// ← deployed mainnet address drops in here</span>
   factory: null,
-  status:  "pending-mainnet"
+  status:  "pending-deploy"
 }</pre>
   </section>
 </main>
@@ -1090,15 +1090,15 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
         <a href="https://ladderswap.trade" target="_blank" rel="noopener">FAQ</a>
       </div>
       <div><h4>Elysium</h4>
-        <a href="https://elysium.kinetiq.xyz/faucet" target="_blank" rel="noopener">Faucet</a>
-        <a href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener">Explorer</a>
+        <a href="https://elysiumexplore.com" target="_blank" rel="noopener">Explorer (community)</a>
+        <a href="https://rpc.elysium.kinetiq.xyz" target="_blank" rel="noopener">Mainnet RPC · 99901</a>
         <a href="https://ladderswap.trade" target="_blank" rel="noopener">Contracts</a>
         <a href="https://ladderswap.trade" target="_blank" rel="noopener">ladderswap.trade</a>
       </div>
     </div>
     <div class="sf-legal">
-      <span>Ladder · Elysium Testnet · 2026</span>
-      <span>Testnet assets have no monetary value · Contracts unaudited · Use a testnet-only wallet</span>
+      <span>Ladder · Elysium Mainnet · 2026</span>
+      <span>Real assets — trade at your own risk · Contracts unaudited · Community explorer: elysiumexplore.com (not an official Kinetiq explorer)</span>
     </div>
   </div>
   <div class="sf-giant" aria-hidden="true"><img src="assets/ladder-star-alpha.png" alt="" /><span>LADDER</span></div>
@@ -1122,7 +1122,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 <div class="modal" id="walletModal">
   <div class="modalcard">
     <h3>Connect a wallet</h3>
-    <p>Pick the wallet you want to use on Elysium testnet. You sign everything in your own wallet — this app never holds keys.</p>
+    <p>Pick the wallet you want to use on Elysium Mainnet. You sign everything in your own wallet — this app never holds keys.</p>
     <div id="walletOptions"></div>
     <button class="wclose" onclick="closeWalletModal()">Cancel</button>
   </div>
@@ -1130,56 +1130,61 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 
 <script>
 /* ================= Config ================= */
-var RPC = "https://testnet-rpc.elysium.kinetiq.xyz";
-var EXPLORER = "https://elysium.kinetiq.xyz/testnet-explorer";
-var CHAIN_ID = 99801, CHAIN_HEX = "0x185d9"; /* 99801 in hex */
-var FACTORY = "0xF7B126C6B0DA6ce679Ef4a03355aAC500289e338";
-var ROUTER  = "0x3f910Aa503d93c1d0D28DDE3a9539e6e24dffA68";
-var WHYPE   = "0xCD57F65c2B0e5881CFC2E609F7CD53b746E1F234";
-var TUSD    = "0xD64Dd465f3B88f88d1cFA66af7ad4A6d40257EA9";
-var MULTICALL = "0xcA11bde05977b3631167028862bE2a173976CA11";
+var RPC = "https://rpc.elysium.kinetiq.xyz";
+var EXPLORER = "https://elysiumexplore.com"; /* community explorer — Kinetiq has not published an official mainnet explorer yet */
+var CHAIN_ID = 99901, CHAIN_HEX = "0x1863d"; /* 99901 in hex */
+var FACTORY = null; /* Ladder is not deployed on Elysium mainnet yet — Earn runs aggregator-first on verified external venues (see DEX_SOURCES). Never invent addresses here. */
+var ROUTER  = null;
+var WHYPE   = "0xbA876237B0F021A6c6D852d6c26E107997cC5E81";
+var USDC    = "0xb47c4C8F73F009CC0C0d3f92B388d13E293F0B65";
+var MULTICALL = "0xcA11bde05977b3631167028862bE2a173976CA11"; /* verified present on chain 99901 */
 
-/* ================= Pool sources: the top DEX factories on Elysium =================
-   Ranked by PairCreated events in a full-chain census of Elysium testnet
-   taken 2026-11-06 (1,467 pairs chain-wide across all V2 factories).
-   Ladder's factory is home: every one of its pools is listed, and deposits
-   route through Ladder's router. The other top factories are scanned live
-   at load: any pair touching WHYPE or tUSD with live reserves is pulled
-   into Markets, badged with its DEX, ranked by reserve value. Deposits and
-   withdrawals on external pools are offered ONLY when that DEX's own
-   router is verified (below) — and then they run exclusively through
-   that DEX's own router, never through Ladder's router into a foreign
-   pair. Factories without a verified router stay view-only.
-   Swaps follow the same rule: an external factory's pools become swappable here
-   the moment that DEX's OWN router passes strict on-chain verification —
+/* ================= Pool sources: the V2 DEX factories on Elysium MAINNET =================
+   Mainnet census 2026-11-09 (snapshot block 3,151,602): a full-history
+   PairCreated scan found 11 V2-style factories holding 38 pairs touching
+   the anchors WHYPE / USDC. Ladder itself is NOT deployed on mainnet yet,
+   so Earn runs AGGREGATOR-FIRST: pools come from the external factories
+   below, and Ladder's registry entry stays empty (factory/router null)
+   until Hasan deploys — never invent addresses for it.
+   Four external routers passed the full verification standard —
    router.factory() returns exactly that factory, router.WETH() returns
-   the canonical WHYPE, and a live getAmountsOut matches the pair's
-   reserve math. Execution then runs through that DEX's router, never
-   through Ladder's router into a foreign pair. Router hunt run 2026-11-06
-   (Swap/Mint sender census per factory, every candidate checked):
-   · dex-25aa — VERIFIED: router 0x49fad5…f416 passes all three checks
-     (NVDAx quote matched reserve math to the wei, repeatedly).
-   · dex-b2f8 — its dominant swap executor (0x645f45…7b36) answers
-     factory() but WETH() reverts: a proprietary helper, not a standard
-     router. Not registered.
-   · dex-fa45 — candidate router's WETH() returns a different wrapped
-     token (0xff5681…2332), not the canonical WHYPE. Not registered.
-   · dex-16e2 — live pools, but no swap/mint sender exposes a factory()
-     binding to it. No candidate.
-   · dex-f698 / dex-d250 — no HYPE/tUSD-anchored pairs at all.
-   · dex-2b05 — anchored pairs exist but every reserve is empty.
-   Brand names for the external factories are not published on-chain, so
-   they are labelled by their factory address, which anyone can verify on
-   the explorer. */
+   the canonical mainnet WHYPE, a live getAmountsOut matched the pair's
+   997/1000 reserve math to the wei, and an eth_call swap simulation
+   succeeded. Pools on those venues can swap and LP here, always through
+   that venue's OWN router (never through another DEX's router).
+   Factories without a verified standard router stay VIEW-ONLY: tracked
+   in Markets/Analytics with badges, no swap, no LP.
+   No mainnet V2 DEX publishes official factory/router addresses, so
+   venue ids and labels are NEUTRAL (dex-XXXX, labelled by factory
+   address) — brand attribution is unconfirmed; do not relabel without
+   an official source. Depth warning from the census: total V2 anchor
+   liquidity was only ~100 HYPE on launch day and there is NO usable
+   WHYPE/USDC V2 pair (the only one is dust), so routing hubs on HYPE. */
 var DEX_SOURCES = [
-  { id:"ladder",   name:"Ladder",          factory: FACTORY, router: ROUTER, own:true,  census:2 },
-  { id:"dex-b2f8", name:"DEX 0xb2f8…5dd0", factory:"0xb2f8ad730e9d05d333c7861184aad0bff1785dd0", router:null, census:1259 },
-  { id:"dex-f698", name:"DEX 0xf698…3b69", factory:"0xf6988f1219341262450ae279790e2105c9173b69", router:null, census:39 },
-  { id:"dex-16e2", name:"DEX 0x16e2…a2b9", factory:"0x16e2a1b953b2e1fc2a82f8e2d68a13884e18a2b9", router:null, census:23 },
-  { id:"dex-25aa", name:"DEX 0x25aa…2164", factory:"0x25aa924d70b1f8e5150d2156716fd003f4692164", router:"0x49fad54421d6b81c487d5ab52c3d88e84ec6f416", census:18 },
-  { id:"dex-fa45", name:"DEX 0xfa45…b3f9", factory:"0xfa456ad175f0bdb9285960720b4b6e8f25deb3f9", router:null, census:14 },
-  { id:"dex-d250", name:"DEX 0xd250…0dcc", factory:"0xd2509881a0c0f1698421106a354b2d4737dd0dcc", router:null, census:10 },
-  { id:"dex-2b05", name:"DEX 0x2b05…d34c", factory:"0x2b05a29dfdbf328277cb81e9e26f877671c6d34c", router:null, census:10 }
+  { id:"ladder",       name:"Ladder",          factory: null, router: null, own:true, census:0,
+    note:"Pending deploy — Ladder's own Factory/Router are not on mainnet yet. When Hasan deploys them, this entry goes live and Ladder pools join Markets." },
+  { id:"dex-7272",     name:"DEX 0x7272…1422", factory:"0x7272d37e203f29a55580e9838863c9b5fd2e1422", router:"0x3c5caa33d02c78935fc682a8eb295f0e67b93ced", census:22,
+    note:"Main venue: 22 WHYPE pairs, including the graduated launchpad tokens (AGORA, KLEOS, BOXA, BLOB, e/acc). Router verified 2026-11-09 — swap + LP run through its own router." },
+  { id:"dex-c48c",     name:"DEX 0xc48c…8715", factory:"0xc48c733f9ceac05d79d0d583a15f3c68a14b8715", router:"0x194a77bca0ada3eb15d7b3af201aca197dbe3b26", census:3,
+    note:"One deep pair at census: ES/WHYPE. Router verified 2026-11-09 — swap + LP run through its own router." },
+  { id:"dex-bbbc",     name:"DEX 0xbbbc…5df2", factory:"0xbbbcc62853a5fa27b93d6bab3e6f7ce841e25df2", router:"0xe783de89a7f0408687f051e3e6d0beb62719ebad", census:3,
+    note:"Elys/WHYPE plus the chain's only WHYPE/USDC pair (dust — not a usable market). Router verified 2026-11-09." },
+  { id:"dex-8cec",     name:"DEX 0x8cec…48df", factory:"0x8cec3ce31a071c1c4a68b292b709657cb90748df", router:"0xae4c69127cdcf53b8f84589bf4d1df10c794795d", census:2,
+    note:"Router verified 2026-11-09, but both pairs are smoke-test pools with ~zero depth — registered, depth filters bury them." },
+  { id:"dex-00003fb5", name:"DEX 0x00003fb5…0000", factory:"0x00003fb5739c472bdb5ec22c8fb35039d5ac0000", router:null, census:1,
+    note:"Holds the deepest V2 pool on the chain (DONTBUY/WHYPE), but its only swap contract is nonstandard — no factory()/WETH()/getAmountsOut. View-only." },
+  { id:"dex-0887",     name:"DEX 0x0887…2779", factory:"0x088703700f4fa35bf9eabc8cdbcead3678432779", router:null, census:1,
+    note:"RAM/WHYPE. No standard router confirmed — view-only." },
+  { id:"dex-6020",     name:"DEX 0x6020…144d", factory:"0x6020f273b7b53da1673ec7e1b9c5504ee72a144d", router:null, census:26,
+    note:"26 pairs total but only one anchor pair (GMB/WHYPE) at census; no router found — view-only." },
+  { id:"dex-d380",     name:"DEX 0xd380…ec68", factory:"0xd380d23a4d4a80b588d3c6c6b5d5517dff55ec68", router:null, census:2,
+    note:"PURRG/WHYPE pair is empty; no router found — view-only." },
+  { id:"dex-dabe",     name:"DEX 0xdabe…fdc2", factory:"0xdabea07306b4874bf51d9469488d78ec704bfdc2", router:null, census:2,
+    note:"Test-token pairs only; swap sender exposes no factory()/WETH() — view-only." },
+  { id:"dex-9aa6",     name:"DEX 0x9aa6…25d8", factory:"0x9aa641139a79dfd4289e4102c85baf3e66e925d8", router:null, census:1,
+    note:"FEMO/WHYPE pair is empty; no router found — view-only." },
+  { id:"dex-3dcd",     name:"DEX 0x3dcd…e850", factory:"0x3dcd927be1f9ff3a40c22bbadefad26e98c9e850", router:null, census:1,
+    note:"FAMILY/WHYPE pair is empty; no router found — view-only." }
 ];
 function dexSrc(id){
   for(var i = 0; i < DEX_SOURCES.length; i++) if(DEX_SOURCES[i].id === id) return DEX_SOURCES[i];
@@ -1362,7 +1367,7 @@ function dispName(p, idx){ var a = idx===0?p.token0:p.token1; if(isHype(a)) retu
 function tagFor(p, idx){
   var a = idx===0?p.token0:p.token1, s = dispSym(p, idx);
   if(isHype(a)) return "Gas token";
-  if(a.toLowerCase() === TUSD.toLowerCase()) return "Test USD";
+  if(a.toLowerCase() === USDC.toLowerCase()) return "Stablecoin";
   if(s.toLowerCase().indexOf("ladder") > -1 || s === "LDR") return "Launchpad";
   return "Token";
 }
@@ -1388,7 +1393,7 @@ function friendlyErr(e){
   if(/INSUFFICIENT_B_AMOUNT/i.test(m)) return "Deposit rejected: the two amounts did not match the pool's live ratio, so the second token's router-optimal amount fell below its minimum (INSUFFICIENT_B_AMOUNT). The Deposit form now keeps both sides matched to the pool ratio — re-enter the amount and try again.";
   if(/INSUFFICIENT_A_AMOUNT/i.test(m)) return "Deposit rejected: the two amounts did not match the pool's live ratio, so the first token's router-optimal amount fell below its minimum (INSUFFICIENT_A_AMOUNT). The Deposit form now keeps both sides matched to the pool ratio — re-enter the amount and try again.";
   if(/INSUFFICIENT|EXPIRED|transfer amount exceeds/i.test(m)) return "The transaction would fail at these amounts — the pool moved, the deadline passed, or a balance is short. Try a higher slippage or a smaller amount.";
-  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "The testnet RPC dropped the request. Wait a moment and try again — this RPC is known to hiccup.";
+  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "The mainnet RPC dropped the request. Wait a moment and try again — this RPC is known to hiccup.";
   return "The request could not be completed. Check your wallet and balances, then try again.";
 }
 function txLink(hash){ return '<a href="' + EXPLORER + '/tx/' + hash + '" target="_blank" rel="noopener">' + shortAddr(hash) + ' ↗</a>'; }
@@ -1432,21 +1437,27 @@ async function loadOnePool(pairAddr, src){
   return p;
 }
 async function loadPools(){
-  var src = DEX_SOURCES[0];
-  var lenHex = await ethCall(src.factory, SEL.allPairsLength);
-  var len = Number(decUint(lenHex, 0));
-  var calls = [];
-  for(var i=0;i<len;i++) calls.push({ to: src.factory, data: encCall(SEL.allPairs, [{ t:"uint", v: BigInt(i) }]) });
-  var addrs = await ethCallBatch(calls);
-  var loaded = [];
-  for(var j=0;j<addrs.length;j++){
-    if(addrs[j]) loaded.push(await loadOnePool(decAddr(addrs[j], 0), src));
+  pools = [];
+  /* Ladder's own pools load first when its factory exists. On mainnet it
+     is not deployed yet (FACTORY null), so Markets starts empty and the
+     external-venue scan below fills it — aggregator-first. */
+  if(FACTORY){
+    var src0 = DEX_SOURCES[0];
+    var lenHex = await ethCall(src0.factory, SEL.allPairsLength);
+    var len = Number(decUint(lenHex, 0));
+    var calls0 = [];
+    for(var i0=0;i0<len;i0++) calls0.push({ to: src0.factory, data: encCall(SEL.allPairs, [{ t:"uint", v: BigInt(i0) }]) });
+    var addrs0 = await ethCallBatch(calls0);
+    var loaded0 = [];
+    for(var j0=0;j0<addrs0.length;j0++){
+      if(addrs0[j0]) loaded0.push(await loadOnePool(decAddr(addrs0[j0], 0), src0));
+    }
+    pools = loaded0;
   }
-  pools = loaded;
   await refreshUserData();
   renderStats(); renderMarkets(); renderPortfolio(); saveSnapshot(); saveDepositSnapshot(); saveAprSnapshots();
   renderDexFilter();
-  /* External top-DEX pools: full scan on first load; on later refreshes,
+  /* External venue pools: full scan on first load; on later refreshes,
      reload the pairs the scan already discovered (fast, no re-census). */
   if(extScanState.found.length) reloadExternalPools();
   else scanExternalDexs();
@@ -1488,11 +1499,11 @@ async function batchAdaptive(slice){
 function updateDexSourcesLine(){
   var el = $("dexSources"); if(!el) return;
   var st = extScanState, n = DEX_SOURCES.length - 1;
-  var base = "Pool sources: Ladder's own factory plus the " + n + " other top Uniswap V2 factories on Elysium testnet, ranked by pairs created in a full-chain census (6 Nov 2026). Pairs touching HYPE or tUSD are pulled in live from every factory.";
+  var base = "Pool sources: the " + n + " external Uniswap V2 factories from the Elysium mainnet census (9 Nov 2026, snapshot block 3,151,602) — Ladder's own factory joins this list when it is deployed on mainnet. Pairs touching HYPE or USDC are pulled in live from every factory.";
   if(st.running){
     el.textContent = base + " Scanning now — " + st.factoriesDone + "/" + n + " factories checked, " + st.scannedPairs.toLocaleString("en-US") + " pairs scanned so far.";
   } else if(st.done){
-    el.textContent = base + " Latest scan: " + st.scannedPairs.toLocaleString("en-US") + " pairs checked, " + st.found.length + " live HYPE/tUSD pool" + (st.found.length === 1 ? "" : "s") + " found beyond Ladder's own" +
+    el.textContent = base + " Latest scan: " + st.scannedPairs.toLocaleString("en-US") + " pairs checked, " + st.found.length + " live HYPE/USDC pool" + (st.found.length === 1 ? "" : "s") + " found beyond Ladder's own" +
       (st.factoriesFailed ? " (" + st.factoriesFailed + " of " + n + " factories didn't answer — refresh to retry)" : "") + ".";
   } else {
     el.textContent = base;
@@ -1518,7 +1529,7 @@ async function scanOneFactory(src){
      this RPC for a factory with 1,200+ pairs. A chunk that fails after
      retries throws, and the factory is honestly counted as not answering. */
   var latest = Number(BigInt(await withRetry(function(){ return rpcCall("eth_blockNumber", []); })));
-  var logs = [], CH = 2000000;
+  var logs = [], CH = 1000000; /* mainnet RPC verified accepting 1M-block log ranges in the 2026-11-09 census */
   for(var from = 0; from <= latest; from += CH){
     var to = Math.min(latest, from + CH - 1);
     var part = await withRetry(function(f, t){
@@ -1532,22 +1543,27 @@ async function scanOneFactory(src){
     if(!l.topics || l.topics.length < 3 || !l.data) return;
     var t0 = "0x" + l.topics[1].slice(26), t1 = "0x" + l.topics[2].slice(26);
     var pair = decAddr(l.data, 0);
-    if(isHype(t0) || isHype(t1) || t0.toLowerCase() === TUSD.toLowerCase() || t1.toLowerCase() === TUSD.toLowerCase())
+    if(isHype(t0) || isHype(t1) || t0.toLowerCase() === USDC.toLowerCase() || t1.toLowerCase() === USDC.toLowerCase())
       anchored.push({ pair: pair, token0: t0, token1: t1 });
   });
   if(!anchored.length) return;
   var rres = await ethCallBatchChunked(anchored.map(function(a){ return { to: a.pair, data: SEL.getReserves }; }));
-  var spot = hypeSpot();
   var cands = [];
   anchored.forEach(function(a, k){
     if(!rres[k]) return;
     var r0 = decUint(rres[k], 0), r1 = decUint(rres[k], 1);
     if(r0 === 0n || r1 === 0n) return; /* empty pair — not a live pool */
-    var val = 0;
+    /* Rank by HYPE-side depth: a WHYPE pair's total value in HYPE is
+       ~2x its HYPE reserve at its own spot, so the HYPE reserve alone
+       ranks pairs correctly. A USDC-only pair (none with depth at
+       census) falls back to its USDC amount at 6 decimals. */
+    var val = 0, hypeAmt = null, usdcAmt = null;
     [[a.token0, r0], [a.token1, r1]].forEach(function(pr){
-      if(pr[0].toLowerCase() === TUSD.toLowerCase()) val += parseFloat(fmtPlain(pr[1], 18));
-      else if(isHype(pr[0]) && spot) val += parseFloat(fmtPlain(pr[1], 18)) * spot;
+      if(isHype(pr[0])) hypeAmt = parseFloat(fmtPlain(pr[1], 18));
+      else if(pr[0].toLowerCase() === USDC.toLowerCase()) usdcAmt = parseFloat(fmtPlain(pr[1], 6));
     });
+    if(hypeAmt !== null) val = hypeAmt * 2;
+    else if(usdcAmt !== null) val = usdcAmt;
     cands.push({ pair: a.pair, val: val });
   });
   cands.sort(function(x, y){ return y.val - x.val; });
@@ -1640,21 +1656,21 @@ function underlying(p, idx){
   return (idx===0 ? p.r0 : p.r1) * p.lpBal / p.totalSupply;
 }
 function pooledTotals(){
-  var hype = 0n, tusd = 0n;
+  var hype = 0n, usdc = 0n;
   pools.forEach(function(p){
     if(p.err || p.r0 === null || p.r0 === undefined) return;
     [[p.token0,p.r0],[p.token1,p.r1]].forEach(function(pr){
       if(isHype(pr[0])) hype += pr[1];
-      if(pr[0].toLowerCase() === TUSD.toLowerCase()) tusd += pr[1];
+      if(pr[0].toLowerCase() === USDC.toLowerCase()) usdc += pr[1];
     });
   });
-  return { hype:hype, tusd:tusd };
+  return { hype:hype, usdc:usdc };
 }
 function saveSnapshot(){
   try {
-    var t = pooledTotals(), key = "lslp_snapshots_v1", arr = [];
+    var v = pools.length ? totalDepositsHype() : 0, key = "lslp_snapshots_v2", arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || "[]"); } catch(e){ arr = []; }
-    arr.push({ t: Date.now(), tusd: t.tusd.toString() });
+    arr.push({ t: Date.now(), v: v });
     if(arr.length > 60) arr = arr.slice(arr.length - 60);
     localStorage.setItem(key, JSON.stringify(arr));
     drawSpark(arr);
@@ -1663,7 +1679,7 @@ function saveSnapshot(){
 function drawSpark(arr){
   var svg = $("sparkSvg"); if(!svg) return;
   var W = 560, H = 110, pad = 4, note = $("sparkNote");
-  var pts = arr.map(function(s){ return parseFloat(fmtPlain(BigInt(s.tusd), 18)); });
+  var pts = arr.map(function(x){ return typeof x.v === "number" ? x.v : 0; });
   if(pts.length < 2 || Math.max.apply(null, pts) === Math.min.apply(null, pts)){
     var y = H - 14;
     svg.innerHTML = '<path d="M0,' + y + ' L' + W + ',' + y + '" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.65"/>';
@@ -1677,17 +1693,17 @@ function drawSpark(arr){
     d += (i === 0 ? "M" : "L") + x + "," + yy + " ";
   });
   svg.innerHTML = '<defs><linearGradient id="lgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.38"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs><path d="' + d + 'L' + W + ',' + H + ' L0,' + H + ' Z" fill="url(#lgM)" stroke="none"/><path d="' + d + '" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
-  if(note) note.textContent = "Pooled tUSD across visits, tracked from your visits (" + pts.length + " snapshots). Not market data.";
+  if(note) note.textContent = "Pooled value in HYPE across visits, tracked from your visits (" + pts.length + " snapshots). Not market data.";
 }
 
-/* ================= Swap window (last 2,000 blocks): counts, bar buckets, per-pool tUSD volume =================
+/* ================= Swap window (last 2,000 blocks): counts, bar buckets, per-pool HYPE volume =================
    One shared fetch: the Markets bar chart, the Markets table and the Analytics
    table all read from this single result — pool logs are never fetched twice. */
 var swapWindow = null, swapWindowPromise = null;
-function swapEventValueTusd(p, data){
-  /* A swap's traded value = its input leg(s), valued in tUSD at spot via priceOf
-     (HYPE via the HYPE/tUSD spot, tUSD 1:1, other tokens via their pool's spot
-     where a path exists). Returns null when a leg cannot be priced. */
+function swapEventValueHype(p, data){
+  /* A swap's traded value = its input leg(s), valued in HYPE via priceOf
+     (HYPE = 1, other tokens via their WHYPE pool's spot where a path
+     exists). Returns null when a leg cannot be priced. */
   var a0in = decUint(data, 0), a1in = decUint(data, 1);
   var a0out = decUint(data, 2), a1out = decUint(data, 3);
   var pr0 = priceOf(p.token0), pr1 = priceOf(p.token1);
@@ -1717,7 +1733,7 @@ function fetchSwapWindow(){
           var bn = parseInt(l.blockNumber, 16);
           var bi = Math.floor((bn - from) / span * NB); if(bi >= NB) bi = NB - 1; if(bi < 0) bi = 0;
           buckets[bi]++; total++;
-          var ev = swapEventValueTusd(p, l.data);
+          var ev = swapEventValueHype(p, l.data);
           if(ev === null) volOk = false; else vol += ev;
         });
         perPool[key] = { count: logs.length, volume: volOk ? vol : null };
@@ -1757,7 +1773,7 @@ function saveAprSnapshots(){
   try {
     if(!pools.length) return;
     var all = {};
-    try { all = JSON.parse(localStorage.getItem("lslp_apr_v1") || "{}"); } catch(e){ all = {}; }
+    try { all = JSON.parse(localStorage.getItem("lslp_apr_v2") || "{}"); } catch(e){ all = {}; }
     var changed = false;
     pools.forEach(function(p){
       if(p.err || !p.totalSupply || p.totalSupply === 0n) return;
@@ -1771,13 +1787,13 @@ function saveAprSnapshots(){
         all[key] = a; changed = true;
       }
     });
-    if(changed) localStorage.setItem("lslp_apr_v1", JSON.stringify(all));
+    if(changed) localStorage.setItem("lslp_apr_v2", JSON.stringify(all));
   } catch(e){}
 }
 function poolApr(p){
   try {
     if(!p || p.err) return null;
-    var all = JSON.parse(localStorage.getItem("lslp_apr_v1") || "{}");
+    var all = JSON.parse(localStorage.getItem("lslp_apr_v2") || "{}");
     var arr = all[p.pair.toLowerCase()] || [];
     if(arr.length < 2) return null;
     var last = arr[arr.length - 1], first = null;
@@ -1800,9 +1816,9 @@ function renderStats(){
   var t = pooledTotals();
   $("tdTotals").innerHTML =
     '<div>' + fmtUnits(t.hype, 18) + ' <span class="unit">HYPE pooled</span></div>' +
-    '<div>' + fmtUnits(t.tusd, 18) + ' <span class="unit">tUSD pooled</span></div>';
+    '<div>' + fmtUnits(t.usdc, 6) + ' <span class="unit">USDC pooled</span></div>';
   var sp = $("statPooled");
-  if(sp) sp.innerHTML = fmtUnits(t.tusd, 18) + ' <span style="font-size:13px;color:var(--muted);font-weight:600">tUSD</span><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px">' + fmtUnits(t.hype, 18) + ' HYPE</div>';
+  if(sp) sp.innerHTML = fmtUnits(t.hype, 18) + ' <span style="font-size:13px;color:var(--muted);font-weight:600">HYPE</span><div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px">' + fmtUnits(t.usdc, 6) + ' USDC</div>';
 }
 function poolMatches(p){
   var asset = $("fAsset").value, type = $("fType").value, inW = $("fInWallet").checked;
@@ -1834,7 +1850,7 @@ function renderMarkets(){
   if(!pools.length) return;
   var list = pools.filter(poolMatches);
   list.sort(function(a,b){
-    var d = reserveValueTusd(b) - reserveValueTusd(a);
+    var d = reserveValueHype(b) - reserveValueHype(a);
     return sortDesc ? d : -d;
   });
   if(!list.length){
@@ -1854,7 +1870,7 @@ function renderMarkets(){
       '<div class="poolcell"><div class="tokicons"><span class="tok t0">' + esc(dispSym(p,0).slice(0,2).toUpperCase()) + '</span><span class="tok t1">' + esc(dispSym(p,1).slice(0,2).toUpperCase()) + '</span></div>' +
       '<div style="min-width:0"><div class="poolname">' + esc(dispSym(p,0)) + ' / ' + esc(dispSym(p,1)) + '</div>' +
       '<div class="chips"><span class="chip dex' + (p.dex === "ladder" ? " own" : "") + '">' + esc(p.dexName || "Ladder") + '</span><span class="chip">' + esc(dispName(p,0)) + '</span><span class="chip tag">' + esc(tagFor(p,0)) + '</span><span class="chip">' + esc(dispName(p,1)) + '</span><span class="chip tag">' + esc(tagFor(p,1)) + '</span></div><button class="swapmini" onclick="event.stopPropagation();openSwapForPool(' + idx + ')">Swap</button></div></div>' +
-      '<div class="numcell">' + fmtMoney(reserveValueTusd(p)) + '</div>' +
+      '<div class="numcell">' + fmtMoney(reserveValueHype(p)) + '</div>' +
       '<div class="numcell">' + (vol === null || vol === undefined ? '<span class="dash">—</span>' : fmtMoney(vol)) + '</div>' +
       '<div class="numcell">' + (vol === null || vol === undefined ? '<span class="dash">—</span>' : fmtMoney(vol * 0.003)) + '</div>' +
       '<div class="numcell">' + (apr === null ? '<span class="dash">—</span>' : apr.toFixed(2) + '%') + '</div>' +
@@ -2009,10 +2025,10 @@ function depMax(idx){
    router's _addLiquidity still quotes against those dust reserves and
    rejects any other ratio, so dust pools stay ratio-locked on their
    actual live reserves like any other existing pool (standard router
-   path — no direct-mint reseed). Live case: the dex-25aa NVDAx/HYPE
-   pair holds ~8.7e-11 NVDAx and ~1 WHYPE; depositing there means
+   path — no direct-mint reseed). Dust pairs exist on mainnet too (the
+   OST smoke-test pairs hold ~2 wei of WHYPE): depositing there means
    following that ratio, so almost all of the value deposited is the
-   WHYPE side and only a dust amount of NVDAx is taken. */
+   non-dust side and only a dust amount of the other token is taken. */
 function poolLive(p){
   return !!(p && p.r0 !== null && p.r0 !== undefined && p.r1 !== null && p.r1 !== undefined && p.r0 > 0n && p.r1 > 0n);
 }
@@ -2175,7 +2191,7 @@ function plainSimReason(e, p){
   if(/TRANSFER_FROM_FAILED|transfer amount exceeds|insufficient allowance|allowance/i.test(m)) return "the router cannot pull the tokens yet — an approval above is still missing, or a balance is short. Approve both tokens first, check your balances, then deposit.";
   if(/INSUFFICIENT_LIQUIDITY/i.test(m)) return "the pool does not have enough liquidity for a deposit at these amounts. Try a smaller amount.";
   if(/insufficient funds/i.test(m)) return "your wallet balance cannot cover this deposit plus gas. Lower the amount and try again.";
-  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the testnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
+  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the mainnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
   return "the router rejected this deposit in a pre-flight check (" + esc(raw ? raw.slice(0, 140) : "unknown revert") + "). Nothing was sent. Check the amounts and approvals, then try again.";
 }
 function plainWdSimReason(e, p){
@@ -2186,7 +2202,7 @@ function plainWdSimReason(e, p){
   if(/INSUFFICIENT_LIQUIDITY/i.test(m)) return "the pool does not have enough liquidity for a withdrawal at this amount. Try a smaller amount.";
   if(/INSUFFICIENT_A_AMOUNT|INSUFFICIENT_B_AMOUNT/i.test(m)) return "the pool moved, so the withdrawal would return less than the minimum set at your slippage tolerance. Try again, or raise the slippage tolerance slightly.";
   if(/insufficient funds/i.test(m)) return "your wallet balance cannot cover the gas for this withdrawal. Top up native HYPE for gas and try again.";
-  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the testnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
+  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the mainnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
   return "the router rejected this withdrawal in a pre-flight check (" + esc(raw ? raw.slice(0, 140) : "unknown revert") + "). Nothing was sent. Check the amount and the LP approval, then try again.";
 }
 function slipVal(which){
@@ -2415,7 +2431,7 @@ async function doWithdraw(){
 }
 
 /* ================= Activity log + earnings (local records) ================= */
-var ACT_KEY = "lslp_activity_v1";
+var ACT_KEY = "lslp_activity_v2";
 function getActivity(){
   try { return JSON.parse(localStorage.getItem(ACT_KEY) || "[]"); } catch(e){ return []; }
 }
@@ -2456,7 +2472,7 @@ function renderActivity(){
       '<div>' + fmtUnits(BigInt(e.amt0), e.dec0) + ' ' + esc(e.sym0) + '<br/><span style="color:var(--muted)">' + (e.type === "Swap" ? '→ ' : '') + fmtUnits(BigInt(e.amt1), e.dec1) + ' ' + esc(e.sym1) + '</span></div></div>';
   }).join("");
 }
-/* ================= Spot pricing in tUSD (HYPE/tUSD pool) ================= */
+/* ================= Spot pricing in HYPE (WHYPE hub) ================= */
 function fmtMoney(v){
   if(v === null || v === undefined || !isFinite(v)) return "—";
   return v.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
@@ -2468,25 +2484,32 @@ function fmtPrice(v){
   if(v >= 0.01) return v.toFixed(4);
   return v.toPrecision(3);
 }
-function hypeSpot(){
-  var pool = null;
+function usdcPriceHype(){
+  /* HYPE per 1 USDC, from any live WHYPE/USDC pool. At census the only
+     such pool was dust, so this is usually null on mainnet today — and
+     every USDC-denominated figure honestly degrades to a dash rather
+     than inventing a rate. */
+  var res = null;
   pools.forEach(function(p){
-    if(p.err) return;
-    if((isHype(p.token0) && p.token1.toLowerCase() === TUSD.toLowerCase()) || (isHype(p.token1) && p.token0.toLowerCase() === TUSD.toLowerCase())) pool = p;
+    if(p.err || res !== null) return;
+    var iU = p.token0.toLowerCase() === USDC.toLowerCase() ? 0 : (p.token1.toLowerCase() === USDC.toLowerCase() ? 1 : -1);
+    if(iU < 0) return;
+    var iH = 1 - iU;
+    if(!isHype(iH === 0 ? p.token0 : p.token1)) return;
+    var rU = parseFloat(fmtPlain(iU === 0 ? p.r0 : p.r1, iU === 0 ? p.dec0 : p.dec1));
+    var rH = parseFloat(fmtPlain(iH === 0 ? p.r0 : p.r1, iH === 0 ? p.dec0 : p.dec1));
+    if(rU > 0 && rH > 0) res = rH / rU;
   });
-  if(!pool) return null;
-  var hi = isHype(pool.token0) ? 0 : 1, ti = 1 - hi;
-  var rh = parseFloat(fmtPlain(hi === 0 ? pool.r0 : pool.r1, hi === 0 ? pool.dec0 : pool.dec1));
-  var rt = parseFloat(fmtPlain(ti === 0 ? pool.r0 : pool.r1, ti === 0 ? pool.dec0 : pool.dec1));
-  if(!rh) return null;
-  return rt / rh;
+  return res;
 }
 function priceOf(addr){
+  /* Price of one token in HYPE. Routing and valuation hub on WHYPE:
+     HYPE = 1, every other token is priced through its WHYPE pool (or,
+     failing that, through a USDC pool once a real USDC rate exists). */
   if(!addr) return null;
   var a = addr.toLowerCase();
-  if(a === TUSD.toLowerCase()) return 1;
-  var spot = hypeSpot();
-  if(isHype(addr)) return spot;
+  if(isHype(addr)) return 1;
+  if(a === USDC.toLowerCase()) return usdcPriceHype();
   var res = null;
   pools.forEach(function(p){
     if(p.err || res !== null) return;
@@ -2497,12 +2520,12 @@ function priceOf(addr){
     var ri = parseFloat(fmtPlain(idx === 0 ? p.r0 : p.r1, idx === 0 ? p.dec0 : p.dec1));
     if(!ri) return;
     var oa = o === 0 ? p.token0 : p.token1;
-    if(oa.toLowerCase() === TUSD.toLowerCase()) res = ro / ri;
-    else if(isHype(oa) && spot) res = (ro / ri) * spot;
+    if(isHype(oa)) res = ro / ri;
+    else if(oa.toLowerCase() === USDC.toLowerCase()){ var up = usdcPriceHype(); if(up) res = (ro / ri) * up; }
   });
   return res;
 }
-function reserveValueTusd(p){
+function reserveValueHype(p){
   if(!p || p.err) return 0;
   var v = 0;
   [[p.token0, p.r0, p.dec0], [p.token1, p.r1, p.dec1]].forEach(function(t){
@@ -2511,12 +2534,12 @@ function reserveValueTusd(p){
   });
   return v;
 }
-function totalDepositsTusd(){
+function totalDepositsHype(){
   var v = 0;
-  pools.forEach(function(p){ v += reserveValueTusd(p); });
+  pools.forEach(function(p){ v += reserveValueHype(p); });
   return v;
 }
-function portfolioValueTusd(){
+function portfolioValueHype(){
   if(!account) return 0;
   var v = 0;
   pools.forEach(function(p){
@@ -2538,8 +2561,8 @@ function poolSpot(p){
   if(!p || p.err) return null;
   var r0 = parseFloat(fmtPlain(p.r0, p.dec0)), r1 = parseFloat(fmtPlain(p.r1, p.dec1));
   if(!r0 || !r1) return null;
-  if(p.token0.toLowerCase() === TUSD.toLowerCase()) return { price: r0 / r1, quote: "tUSD per " + dispSym(p, 1) };
-  if(p.token1.toLowerCase() === TUSD.toLowerCase()) return { price: r1 / r0, quote: "tUSD per " + dispSym(p, 0) };
+  if(p.token0.toLowerCase() === USDC.toLowerCase()) return { price: r0 / r1, quote: "USDC per " + dispSym(p, 1) };
+  if(p.token1.toLowerCase() === USDC.toLowerCase()) return { price: r1 / r0, quote: "USDC per " + dispSym(p, 0) };
   if(isHype(p.token0)) return { price: r1 / r0, quote: dispSym(p, 1) + " per HYPE" };
   if(isHype(p.token1)) return { price: r0 / r1, quote: dispSym(p, 0) + " per HYPE" };
   return { price: r1 / r0, quote: dispSym(p, 1) + " per " + dispSym(p, 0) };
@@ -2549,17 +2572,17 @@ function saveDepositSnapshot(){
   try {
     if(!pools.length) return;
     var arr = [];
-    try { arr = JSON.parse(localStorage.getItem("lslp_dep_tusd_v1") || "[]"); } catch(e){ arr = []; }
-    var v = totalDepositsTusd(), last = arr[arr.length - 1];
+    try { arr = JSON.parse(localStorage.getItem("lslp_dep_hype_v2") || "[]"); } catch(e){ arr = []; }
+    var v = totalDepositsHype(), last = arr[arr.length - 1];
     if(!last || Date.now() - last.t > 45000 || last.v !== v){
       arr.push({ t: Date.now(), v: v });
       if(arr.length > 120) arr = arr.slice(arr.length - 120);
-      localStorage.setItem("lslp_dep_tusd_v1", JSON.stringify(arr));
+      localStorage.setItem("lslp_dep_hype_v2", JSON.stringify(arr));
     }
   } catch(e){}
   try {
     var all = {};
-    try { all = JSON.parse(localStorage.getItem("lslp_price_v1") || "{}"); } catch(e){ all = {}; }
+    try { all = JSON.parse(localStorage.getItem("lslp_price_v2") || "{}"); } catch(e){ all = {}; }
     pools.forEach(function(p){
       if(p.err) return;
       var sp = poolSpot(p);
@@ -2571,7 +2594,7 @@ function saveDepositSnapshot(){
         all[k] = a2;
       }
     });
-    localStorage.setItem("lslp_price_v1", JSON.stringify(all));
+    localStorage.setItem("lslp_price_v2", JSON.stringify(all));
   } catch(e){}
 }
 function drawAreaInto(svg, pts, gradId, W, H){
@@ -2625,7 +2648,7 @@ function renderEarnings(){
     function fstr(f, dec, sym){ return (f > 0n ? "+" : "") + (f < 0n ? "−" : "") + fmtUnits(f < 0n ? -f : f, dec) + " " + sym; }
     return '<div class="epool"><span style="font-weight:700;color:var(--text)">' + esc(dispSym(p,0)) + ' / ' + esc(dispSym(p,1)) + '</span><span>' + esc(fstr(f0, p.dec0, dispSym(p,0))) + ' · ' + esc(fstr(f1, p.dec1, dispSym(p,1))) + '</span></div>';
   }).join("");
-  var totalHtml = anyRec ? '<b>' + (total > 0 ? "+" : "") + fmtMoney(total) + ' <span style="font-size:12px;color:var(--muted);font-weight:600">tUSD (spot)</span></b>' : '<b>—</b>';
+  var totalHtml = anyRec ? '<b>' + (total > 0 ? "+" : "") + fmtMoney(total) + ' <span style="font-size:12px;color:var(--muted);font-weight:600">HYPE</span></b>' : '<b>—</b>';
   card.innerHTML = '<div class="earn-inner"><div class="erow"><span>Fees earned (est.)</span>' + totalHtml + '</div>' +
     '<div class="esub">In Uniswap V2 the 0.3% swap fee accrues into the pool, so your position is simply worth more tokens. This estimate compares what your positions are worth now against the net amounts this app recorded you depositing — from local records on this device, not an on-chain figure.</div>' + rows + '</div>';
 }
@@ -2658,8 +2681,7 @@ function renderVote(){
 
 /* ================= Analytics (live on-chain) ================= */
 var SWAP_TOPIC = "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822";
-var LDR_TOKEN = "0x51D354e2De021f17e7d17fE2EEB69881F0FBAE17";
-var BONDING_LAUNCHPAD = "0xfC399406AF110831F12F25D93D716f7961c8FF88";
+var LADDER_TOKEN = null; /* $LADDER is not created on mainnet yet — set the address here once Hasan creates it on a launchpad. */
 var analyticsLoaded = false;
 var anTab = "deposits", anTf = "ALL", anWin = "1W", anSortDesc = true;
 var anRowsData = null, anSeries = undefined, anSeriesPromise = null;
@@ -2688,7 +2710,7 @@ function setAnWin(w){
 function toggleAnSort(){ anSortDesc = !anSortDesc; renderAnTable(); }
 function depSnapsFiltered(){
   var arr = [];
-  try { arr = JSON.parse(localStorage.getItem("lslp_dep_tusd_v1") || "[]"); } catch(e){ arr = []; }
+  try { arr = JSON.parse(localStorage.getItem("lslp_dep_hype_v2") || "[]"); } catch(e){ arr = []; }
   if(anTf === "ALL") return arr;
   var days = anTf === "1W" ? 7 : (anTf === "1M" ? 30 : 90);
   var cut = Date.now() - days * 864e5;
@@ -2700,7 +2722,7 @@ function renderAnChart(){
   if(anTab === "fees"){
     svg.innerHTML = '<line x1="0" y1="240" x2="560" y2="240" stroke="#333333" stroke-width="2"/>';
     if(axis) axis.innerHTML = "";
-    if(msg){ msg.textContent = "Per-period fee totals need an indexer — on this testnet, fees accrue inside pool reserves instead."; msg.classList.remove("hidden"); }
+    if(msg){ msg.textContent = "Per-period fee totals need an indexer — on Elysium mainnet, fees accrue inside pool reserves instead."; msg.classList.remove("hidden"); }
     if(note) note.textContent = "The 0.3% swap fee is added to pool reserves on every trade, so it shows up in deposits over time rather than as a separate fee series.";
     return;
   }
@@ -2734,13 +2756,13 @@ function renderAnChart(){
   var curved = drawAreaInto(svg, pts, "lgAn", 560, 290);
   if(axis) axis.innerHTML = axisHTML(pts);
   if(note) note.textContent = curved
-    ? "Total deposits in tUSD at the HYPE/tUSD spot price, from snapshots saved on your visits (" + pts.length + " in this range)."
+    ? "Total deposits in HYPE, from snapshots saved on your visits (" + pts.length + " in this range)."
     : "History builds as you visit — this chart is drawn only from snapshots of total deposits saved on your own visits.";
 }
 function updateAnTableNote(){
   var el = $("anTableNote"); if(!el) return;
-  var method = "Volume & fees: last 2,000 blocks · TVL at spot · APR from your tracked fee growth (needs 1h+ of visits). Fees = 0.3% of volume. Pool APR = daily swap fees ÷ TVL × 365 — a simple rate, before deductions, not a forecast. All figures in tUSD (≈ tUSD at spot). ";
-  var winTxt = "The " + anWin + " selector is a display scope only — on this testnet, swap counts always cover the latest 2,000-block RPC window.";
+  var method = "Volume & fees: last 2,000 blocks · TVL at spot · APR from your tracked fee growth (needs 1h+ of visits). Fees = 0.3% of volume. Pool APR = daily swap fees ÷ TVL × 365 — a simple rate, before deductions, not a forecast. All figures in HYPE. ";
+  var winTxt = "The " + anWin + " selector is a display scope only — on Elysium mainnet, swap counts always cover the latest 2,000-block RPC window.";
   if(anSeries){
     el.textContent = method + "Swaps are Swap events in blocks #" + anSeries.from.toLocaleString("en-US") + "–#" + anSeries.latest.toLocaleString("en-US") + " (last 2,000 blocks), read live from pool event logs. " + winTxt;
   } else if(anSeries === null){
@@ -2751,7 +2773,7 @@ function updateAnTableNote(){
 }
 function sparklineSVG(pairAddr){
   var arr = [];
-  try { var all = JSON.parse(localStorage.getItem("lslp_price_v1") || "{}"); arr = all[pairAddr.toLowerCase()] || []; } catch(e){ arr = []; }
+  try { var all = JSON.parse(localStorage.getItem("lslp_price_v2") || "{}"); arr = all[pairAddr.toLowerCase()] || []; } catch(e){ arr = []; }
   if(arr.length < 2) return "";
   var vals = arr.map(function(s){ return s.p; });
   var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals), W = 64, H = 20;
@@ -2783,7 +2805,7 @@ function renderAnTable(){
     }
     return true;
   });
-  list.sort(function(a, b){ return anSortDesc ? reserveValueTusd(b.p) - reserveValueTusd(a.p) : reserveValueTusd(a.p) - reserveValueTusd(b.p); });
+  list.sort(function(a, b){ return anSortDesc ? reserveValueHype(b.p) - reserveValueHype(a.p) : reserveValueHype(a.p) - reserveValueHype(b.p); });
   if(!list.length){
     box.innerHTML = '<div class="emptybox"><div class="et">No markets match those filters</div>Try clearing the search or choosing another pool type.</div>';
     return;
@@ -2804,15 +2826,15 @@ function renderAnTable(){
 }
 async function loadAnalytics(){
   /* Left rail: spot-valued totals + categories + change */
-  var total = totalDepositsTusd();
+  var total = totalDepositsHype();
   if($("anTotalBig")) $("anTotalBig").textContent = pools.length ? fmtMoney(total) : "—";
   var cats = { hype: 0, launch: 0, other: 0 };
-  pools.forEach(function(p){ if(!p.err) cats[poolCategory(p)] += reserveValueTusd(p); });
-  if($("anCatHype")) $("anCatHype").textContent = fmtMoney(cats.hype) + " tUSD";
-  if($("anCatLaunch")) $("anCatLaunch").textContent = fmtMoney(cats.launch) + " tUSD";
-  if($("anCatOther")) $("anCatOther").textContent = fmtMoney(cats.other) + " tUSD";
+  pools.forEach(function(p){ if(!p.err) cats[poolCategory(p)] += reserveValueHype(p); });
+  if($("anCatHype")) $("anCatHype").textContent = fmtMoney(cats.hype) + " HYPE";
+  if($("anCatLaunch")) $("anCatLaunch").textContent = fmtMoney(cats.launch) + " HYPE";
+  if($("anCatOther")) $("anCatOther").textContent = fmtMoney(cats.other) + " HYPE";
   var snaps = [];
-  try { snaps = JSON.parse(localStorage.getItem("lslp_dep_tusd_v1") || "[]"); } catch(e){ snaps = []; }
+  try { snaps = JSON.parse(localStorage.getItem("lslp_dep_hype_v2") || "[]"); } catch(e){ snaps = []; }
   var chEl = $("anChange");
   if(chEl){
     if(snaps.length >= 2 && snaps[0].v > 0){
@@ -2830,33 +2852,20 @@ async function loadAnalytics(){
     var sp = poolSpot(p);
     var e = anSeries ? anSeries.perPool[p.pair.toLowerCase()] : null;
     return { p: p, price: sp ? sp.price : null, quote: sp ? sp.quote : "",
-      tvl: reserveValueTusd(p),
+      tvl: reserveValueHype(p),
       volume: e ? e.volume : null,
       swaps: e ? e.count : null,
       apr: poolApr(p) };
   });
   updateAnTableNote();
   renderAnTable();
-  /* LDR token section (left rail) */
+  /* $LADDER token section (left rail) — not created on mainnet yet */
   if(!analyticsLoaded){
-    try {
-      var meta = await tokenMeta(LDR_TOKEN);
-      var supHex = await ethCall(LDR_TOKEN, SEL.totalSupply);
-      var supply = decUint(supHex, 0);
-      var curveBal = null;
-      try { var cbHex = await ethCall(LDR_TOKEN, encCall(SEL.balanceOf, [{ t:"address", v: BONDING_LAUNCHPAD }])); curveBal = decUint(cbHex, 0); } catch(e){}
-      var circ = curveBal !== null ? supply - curveBal : null;
-      $("ldrBody").innerHTML =
-        '<div style="font-size:16.5px;font-weight:800;margin-top:10px">' + esc(meta.symbol || "LDR") + ' <span style="font-size:12px;color:var(--muted);font-weight:600">' + esc(meta.name || "") + '</span></div>' +
-        '<div class="an-row"><span>Total supply</span><b>' + fmtUnits(supply, meta.decimals, 0) + '</b></div>' +
-        '<div class="an-row"><span>Circulating</span><b>' + (circ !== null ? fmtUnits(circ, meta.decimals, 0) : '—') + '</b></div>' +
-        '<div class="an-row"><span>Held by bonding curve</span><b>' + (curveBal !== null ? fmtUnits(curveBal, meta.decimals, 0) : '—') + '</b></div>' +
-        '<div class="an-row"><span>Locked supply</span><b>0</b></div>' +
-        '<div class="an-note">Read live from the testnet LDR contract. Circulating = total supply minus the balance held by the Ladder bonding-curve launchpad. Locked supply is 0 because ve-locking only arrives with the planned mainnet veLDR model.</div>';
-      analyticsLoaded = true;
-    } catch(e){
-      $("ldrBody").innerHTML = '<div style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:10px">LDR token data unavailable right now (RPC hiccup). Reopen Analytics to retry.</div>';
-    }
+    var lb = $("ldrBody");
+    if(lb) lb.innerHTML =
+      '<div style="font-size:16.5px;font-weight:800;margin-top:10px">$LADDER <span style="font-size:12px;color:var(--muted);font-weight:600">not created yet</span></div>' +
+      '<div class="an-note">Hasan will create $LADDER on an Elysium launchpad. Once the token exists on mainnet, this section reads its supply live from its contract — and the veLDR Vote system activates after Ladder\'s own pools are live.</div>';
+    analyticsLoaded = true;
   }
 }
 
@@ -2878,13 +2887,13 @@ function togglePfMenu(ev){
 function closePfMenu(){ var m = $("pfMenu"); if(m) m.classList.remove("open"); }
 async function refreshAll(){
   closePfMenu();
-  toast("Refreshing pool data from the testnet…");
+  toast("Refreshing pool data from mainnet…");
   try {
     await loadPools();
     loadSwapBars();
     toast("Pool data refreshed.");
   } catch(e){
-    toast("Refresh failed — the testnet RPC dropped the request. Try again in a moment.");
+    toast("Refresh failed — the mainnet RPC dropped the request. Try again in a moment.");
   }
 }
 function setPfFilter(f){
@@ -2899,14 +2908,14 @@ function setPfTf(tf){
 }
 function renderPfValue(v){
   var el = $("pfValue"); if(!el) return;
-  if(!v || v <= 0){ el.innerHTML = '0<span class="dim">.00</span><span class="pf-unit">≈ tUSD (spot)</span>'; return; }
+  if(!v || v <= 0){ el.innerHTML = '0<span class="dim">.00</span><span class="pf-unit">≈ HYPE</span>'; return; }
   var s = v.toFixed(2), parts = s.split(".");
   var intp = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  el.innerHTML = esc(intp) + '<span class="dim">.' + esc(parts[1]) + '</span><span class="pf-unit">≈ tUSD (spot)</span>';
+  el.innerHTML = esc(intp) + '<span class="dim">.' + esc(parts[1]) + '</span><span class="pf-unit">≈ HYPE</span>';
 }
 function pfSnapsFiltered(){
   var arr = [];
-  try { arr = JSON.parse(localStorage.getItem("lslp_pfolio_v1") || "[]"); } catch(e){ arr = []; }
+  try { arr = JSON.parse(localStorage.getItem("lslp_pfolio_v2") || "[]"); } catch(e){ arr = []; }
   var now = Date.now(), cut = 0;
   if(pfTf === "1W") cut = now - 7 * 864e5;
   else if(pfTf === "1M") cut = now - 30 * 864e5;
@@ -2929,10 +2938,10 @@ function savePfSnapshot(v){
   lastPfSnap = now;
   try {
     var arr = [];
-    try { arr = JSON.parse(localStorage.getItem("lslp_pfolio_v1") || "[]"); } catch(e){ arr = []; }
+    try { arr = JSON.parse(localStorage.getItem("lslp_pfolio_v2") || "[]"); } catch(e){ arr = []; }
     arr.push({ t: now, v: v });
     if(arr.length > 120) arr = arr.slice(arr.length - 120);
-    localStorage.setItem("lslp_pfolio_v1", JSON.stringify(arr));
+    localStorage.setItem("lslp_pfolio_v2", JSON.stringify(arr));
   } catch(e){}
 }
 function renderPortfolio(){
@@ -2943,7 +2952,7 @@ function renderPortfolio(){
   if($("cntAll")) $("cntAll").textContent = okPools.length;
   if($("cntHold")) $("cntHold").textContent = mine.length;
   if($("cntNoHold")) $("cntNoHold").textContent = okPools.length - mine.length;
-  var v = portfolioValueTusd();
+  var v = portfolioValueHype();
   if(pools.length) savePfSnapshot(v);
   renderPfValue(v); drawPfChart(); renderEarnings();
   if(!account || !mine.length){
@@ -3044,7 +3053,7 @@ async function connectWith(provider){
         catch(sw){
           if(sw && (sw.code === 4902 || sw.code === -32603 || /unrecognized|not added/i.test(sw.message || ""))){
             await provider.request({ method:"wallet_addEthereumChain", params:[{
-              chainId: CHAIN_HEX, chainName:"Elysium Testnet",
+              chainId: CHAIN_HEX, chainName:"Elysium Mainnet",
               nativeCurrency:{ name:"HYPE", symbol:"HYPE", decimals:18 },
               rpcUrls:[RPC], blockExplorerUrls:[EXPLORER]
             }]});
@@ -3095,7 +3104,7 @@ var swapInTok = null, swapOutTok = null;
 var swapQuote = null, swapQuoteAt = 0, swapQuoteSeq = 0, swapQuoteTimer = null;
 var swapSlippage = 0.5, swapPickerSide = "in", swapInitDone = false;
 var swapBalCache = {};
-var SWAPS_KEY = "lslp_swaps_v1";
+var SWAPS_KEY = "lslp_swaps_v2";
 
 function swapEffAddr(t){ return t.addr === null ? WHYPE : t.addr; }
 function swapKey(t){ return swapEffAddr(t).toLowerCase(); }
@@ -3104,10 +3113,8 @@ function swapTokensAll(){
   function push(t){ if(!t) return; var k = swapKey(t); if(seen[k]) return; seen[k] = true; out.push(t); }
   push({ addr:null, sym:"HYPE", name:"Hyperliquid (native)", dec:18 });
   push({ addr:WHYPE, sym:"HYPE", name:"Hyperliquid (wrapped)", dec:18 }); /* same eff key — collapses into HYPE */
-  var tm = tokenMetaCache[TUSD.toLowerCase()];
-  push({ addr:TUSD, sym: tm ? tm.symbol : "tUSD", name: tm ? tm.name : "Elysium Test USD", dec: tm ? tm.decimals : 18 });
-  var lm = tokenMetaCache[LDR_TOKEN.toLowerCase()];
-  push({ addr:LDR_TOKEN, sym: lm ? lm.symbol : "LDR", name: lm ? lm.name : "ladder swap", dec: lm ? lm.decimals : 18 });
+  var um = tokenMetaCache[USDC.toLowerCase()];
+  push({ addr:USDC, sym: um ? um.symbol : "USDC", name: um ? um.name : "USD Coin", dec: um ? um.decimals : 6 });
   pools.forEach(function(p){
     if(p.err) return;
     [0,1].forEach(function(idx){
@@ -3145,7 +3152,13 @@ function swapPathLabel(path){
 
 function initSwap(){
   if(!swapInTok) swapInTok = swapTokBySym("HYPE") || swapTokensAll()[0];
-  if(!swapOutTok || (swapInTok && swapKey(swapOutTok) === swapKey(swapInTok))) swapOutTok = swapTokBySym("tUSD");
+  /* The receive side starts UNSELECTED on purpose: the only WHYPE/USDC
+     V2 pair on mainnet is dust, so presetting USDC here would hand every
+     first-time user a guaranteed no-route. The route-aware picker guides
+     the choice instead — USDC stays listed there, flagged as having no
+     usable route yet. Only a same-as-pay selection is cleared back to
+     unselected. */
+  if(swapOutTok && swapInTok && swapKey(swapOutTok) === swapKey(swapInTok)) swapOutTok = null;
   swapInitDone = true;
   swapSyncHeads();
   renderSwapPopular();
@@ -3211,6 +3224,7 @@ async function swapRefreshBalances(){
 function swapSyncHeads(){
   if(swapInTok) $("swapInSym").textContent = swapInTok.sym;
   if(swapOutTok) $("swapOutSym").textContent = swapOutTok.sym;
+  else $("swapOutSym").textContent = "Select token";
   swapRefreshBalances();
 }
 async function swapMax(){
@@ -3238,8 +3252,8 @@ function swapQuoteStaleKey(){
 }
 function swapClearEstimates(){
   var a = $("swapInUsd"), b = $("swapOutUsd");
-  if(a) a.textContent = "≈ — tUSD";
-  if(b) b.textContent = "≈ — tUSD";
+  if(a) a.textContent = "≈ — HYPE";
+  if(b) b.textContent = "≈ — HYPE";
 }
 /* Which pool-source (DEX_SOURCES id) a quote venue executes on. Ladder's
    Aggregator entry and its pool source share the id "ladder"; verified
@@ -3309,7 +3323,7 @@ function swapNoRouteHtml(effIn, effOut){
       ", and Earn has not been able to verify that DEX's router on-chain — its pools stay view-only, so no venue here can quote or execute this swap.";
   if(extScanState.running)
     return "No route found yet — Earn is still scanning the other DEX factories for live pools. If a routable pool turns up, this panel re-quotes on its own.";
-  return "<b>No route for this pair on testnet yet.</b> No loaded pool path connects these two tokens on a venue with a verified router.";
+  return "<b>No route for this pair on mainnet yet.</b> No loaded pool path connects these two tokens on a venue with a verified router.";
 }
 async function refreshSwapQuote(){
   var seq = ++swapQuoteSeq;
@@ -3322,14 +3336,25 @@ async function refreshSwapQuote(){
     swapClearDetails(); swapUpdateButton();
     return;
   }
-  if(!swapInTok || !swapOutTok) return;
+  if(!swapInTok || !swapOutTok){
+    /* No pair to quote yet — most commonly the receive side still
+       unselected (the default). Say what to do next instead of leaving
+       a stale panel; the picker marks live routes per token. */
+    swapQuote = null;
+    if(outEl){ outEl.textContent = "0.0"; outEl.classList.add("dim"); }
+    if(rateEl) rateEl.textContent = swapInTok
+      ? "Select a token to receive — the picker marks which tokens have a live route. USDC has no usable route yet: its only mainnet pair is a dust WHYPE/USDC pool."
+      : "Select the token you pay with to get a live quote.";
+    swapClearEstimates(); swapClearDetails(); swapUpdateButton();
+    return;
+  }
   var amtIn = parseUnits($("swapAmtIn").value, swapInTok.dec);
   if(amtIn === null || amtIn <= 0n){
     swapQuote = null;
     if(outEl){ outEl.textContent = "0.0"; outEl.classList.add("dim"); }
     if(rateEl) rateEl.textContent = "Enter an amount to get a live quote.";
-    $("swapInUsd").textContent = "≈ — tUSD";
-    $("swapOutUsd").textContent = "≈ — tUSD";
+    $("swapInUsd").textContent = "≈ — HYPE";
+    $("swapOutUsd").textContent = "≈ — HYPE";
     swapClearDetails(); swapUpdateButton();
     return;
   }
@@ -3383,7 +3408,7 @@ async function refreshSwapQuote(){
   if(!best){
     swapQuote = null;
     if(outEl){ outEl.textContent = "—"; outEl.classList.add("dim"); }
-    if(rateEl) rateEl.textContent = "A route exists for this pair, but the quote call itself returned nothing — this testnet RPC drops calls when it is busy. Nothing was sent; press “Get a quote” to retry.";
+    if(rateEl) rateEl.textContent = "A route exists for this pair, but the quote call itself returned nothing — the mainnet RPC drops calls when it is busy. Nothing was sent; press “Get a quote” to retry.";
     swapClearDetails(); swapUpdateButton();
     return;
   }
@@ -3432,12 +3457,13 @@ function swapApplyDetails(){
     } else iwarn.classList.add("hidden");
   }
   var pIn = priceOf(q.effIn), pOut = priceOf(q.effOut);
-  $("swapInUsd").textContent = pIn ? "≈ " + fmtMoney(parseFloat(fmtPlain(q.amtIn, swapInTok.dec)) * pIn) + " tUSD" : "≈ — tUSD";
-  $("swapOutUsd").textContent = pOut ? "≈ " + fmtMoney(parseFloat(fmtPlain(q.amountOut, swapOutTok.dec)) * pOut) + " tUSD" : "≈ — tUSD";
+  $("swapInUsd").textContent = pIn ? "≈ " + fmtMoney(parseFloat(fmtPlain(q.amtIn, swapInTok.dec)) * pIn) + " HYPE" : "≈ — HYPE";
+  $("swapOutUsd").textContent = pOut ? "≈ " + fmtMoney(parseFloat(fmtPlain(q.amountOut, swapOutTok.dec)) * pOut) + " HYPE" : "≈ — HYPE";
 }
 function swapUpdateButton(){
-  var btn = $("swapGo"); if(!btn || !swapInTok || !swapOutTok) return;
+  var btn = $("swapGo"); if(!btn || !swapInTok) return;
   if(!account){ btn.disabled = false; btn.textContent = "Connect wallet to swap"; return; }
+  if(!swapOutTok){ btn.disabled = true; btn.textContent = "Select a token to receive"; return; }
   var amtIn = parseUnits($("swapAmtIn").value, swapInTok.dec);
   if(!pools.length){ btn.disabled = true; btn.textContent = "Loading pools…"; return; }
   if(amtIn === null || amtIn <= 0n){ btn.disabled = true; btn.textContent = "Enter an amount"; return; }
@@ -3506,7 +3532,7 @@ function openSwapForPool(idx){
 function renderSwapPopular(){
   var wrap = $("swapPopularWrap"), box = $("swapPopular");
   if(!wrap || !box) return;
-  var cands = [["HYPE","tUSD"],["HYPE","LDR"],["ladder","tUSD"]];
+  var cands = [["HYPE","AGORA"],["HYPE","ES"],["HYPE","USDC"]];
   var html = "";
   cands.forEach(function(c){
     var exists = pools.some(function(p){
@@ -3551,7 +3577,13 @@ function renderSwapPickerList(){
        external DEX says which one carries its swaps. */
     var tag = "";
     var dexIds = tokenDexIds(t);
-    if(dexIds.length){
+    if(swapKey(t) === USDC.toLowerCase()){
+      /* USDC stays listed (canonical mainnet token, and its dust pair
+         exists), but it is flagged honestly: that pair is not a usable
+         market, so picking USDC resolves to the no-route explanation
+         rather than a quote. */
+      tag = '<div class="tn" style="color:var(--amber)">No usable route yet — the only WHYPE/USDC pair on mainnet is dust</div>';
+    } else if(dexIds.length){
       var routed = dexIds.filter(function(id){ return !!dexSrc(id).router; });
       if(!routed.length)
         tag = '<div class="tn" style="color:var(--amber)">Pool on ' + esc(dexIds.map(function(id){ return dexSrc(id).name; }).join(", ")) + ' · view only — router not verified</div>';
@@ -3692,35 +3724,30 @@ function renderSwapRecent(){
      adapter.buildSwap(quote, opts) -> calldata for that venue's router (mainnet)
    A venue whose router address is not published yet is "pending": it renders
    in the registry and the comparison, but its adapter honestly reports that
-   it cannot quote. Wiring a venue at mainnet = filling in its router/factory
-   in AGG_SOURCES and pointing `adapter` at a family implementation. */
+   it cannot quote. Wiring a new venue = filling in its router/factory
+   in the registry and pointing `adapter` at a family implementation. */
 var AGG_SOURCES = [
   { id:"ladder", name:"Ladder", kind:"Uniswap V2 · own pools", adapter:"v2", dexId:"ladder",
-    router: ROUTER, factory: FACTORY, status:"live",
-    note:"Ladder's own pools — the floor route every comparison is measured against." },
-  { id:"nest", name:"Nest", kind:"External DEX", adapter:"v2",
-    router: null, factory: null, status:"pending",
-    note:"Set to be live from Elysium mainnet's first block. Its router address drops into this entry at launch and quoting starts automatically." },
-  { id:"dawn", name:"Dawn DEX", kind:"External DEX", adapter:"v2",
-    router: null, factory: null, status:"pending",
-    note:"Committed to Elysium mainnet; router address not yet published." },
-  { id:"univ3", name:"Uniswap V3 pools", kind:"V3 · via Citadel / Supercolony", adapter:"v3",
-    router: null, factory: null, status:"pending",
-    note:"Launchpad routes graduate tokens into locked Uniswap V3 pools quoted in HYPE. Needs the V3 adapter + quoter address at mainnet." }
+    router: null, factory: null, status:"pending-deploy",
+    note:"Not deployed on Elysium mainnet yet. Earn runs aggregator-first on the verified external venues below; when Hasan deploys Ladder's Factory + Router, this entry goes live and Ladder's own pools join Markets." }
 ];
 
-/* External DEX factories whose own router passed strict on-chain
-   verification (see the DEX_SOURCES note for the per-factory evidence)
-   join this registry as live venues: the Swap view and the comparison
-   quote them alongside Ladder, and execution runs through their own
-   router with the same exact-amount approvals, slippage and deadline.
-   A factory with no verified router never appears here, and its pools
-   stay view-only. */
+/* Every external factory from the mainnet census joins this registry:
+   router-verified venues as LIVE (Swap quotes and executes through their
+   own router, with the same exact-amount approvals, slippage and
+   deadline as any venue), the rest as VIEW-ONLY (their pools are tracked
+   in Markets, but nothing quotes or executes for them). Ladder's own
+   entry above stays pending-deploy until its contracts exist. */
 DEX_SOURCES.slice(1).forEach(function(d){
-  if(!d.router) return;
-  AGG_SOURCES.push({ id: d.id, name: d.name, kind:"Uniswap V2 · external DEX", adapter:"v2", dexId: d.id,
-    router: d.router, factory: d.factory, status:"live",
-    note:"External DEX verified on-chain: its router's factory() returns exactly this factory, WETH() returns the canonical WHYPE, and a live quote matched the pair's reserve math. Its pools (NVDAx, TSLAx) swap here through its own router." });
+  if(d.router){
+    AGG_SOURCES.push({ id: d.id, name: d.name, kind:"Uniswap V2 · external DEX", adapter:"v2", dexId: d.id,
+      router: d.router, factory: d.factory, status:"live",
+      note: d.note || "External DEX verified on-chain: its router's factory() returns exactly this factory, WETH() returns the canonical mainnet WHYPE, a live quote matched the pair's reserve math, and a swap simulation passed. Swaps and LP here run through its own router." });
+  } else {
+    AGG_SOURCES.push({ id: d.id, name: d.name, kind:"Uniswap V2 · external DEX", adapter:"v2", dexId: d.id,
+      router: null, factory: d.factory, status:"viewonly",
+      note: d.note || "Pools tracked in Markets; no verified standard router, so quotes and execution stay off for this venue." });
+  }
 });
 
 /* --- ABI helpers for getAmountsOut(uint256, address[]) -> uint256[] --- */
@@ -3746,8 +3773,8 @@ var AGG_ADAPTERS = {
       return decAmountsOut(hex);
     },
     buildSwap: function(src, quote, opts){
-      /* swapExactTokensForTokens calldata — execution ships with mainnet. */
-      return { venue: src.id, to: src.router, note: "execution at mainnet" };
+      /* swapExactTokensForTokens calldata for this venue's router. */
+      return { venue: src.id, to: src.router, note: "execution via venue router" };
     }
   },
   /* Uniswap V3 (QuoterV2) — interface reserved; quoter address pending. */
@@ -3759,17 +3786,18 @@ var AGG_ADAPTERS = {
 function aggAdapter(src){ return AGG_ADAPTERS[src.adapter] || null; }
 
 /* Candidate paths between two tokens: direct first, then one intermediate
-   hop through the chain's deepest tokens (WHYPE, tUSD). */
+   hop through WHYPE — the routing hub. There is no usable WHYPE/USDC V2
+   pool on mainnet yet, so USDC is never used as a routing hop. */
 function aggPaths(aIn, aOut){
   var paths = [[aIn, aOut]];
-  [WHYPE, TUSD].forEach(function(mid){
+  [WHYPE].forEach(function(mid){
     var m = mid.toLowerCase();
     if(m !== aIn.toLowerCase() && m !== aOut.toLowerCase()) paths.push([aIn, mid, aOut]);
   });
   return paths;
 }
 
-/* Unique tokens across loaded pools, HYPE/tUSD first. */
+/* Unique tokens across loaded pools, HYPE/USDC first. */
 function aggTokens(){
   var seen = {}, out = [];
   pools.forEach(function(p){
@@ -3780,7 +3808,7 @@ function aggTokens(){
       out.push({ addr:a, sym: dispSym(p, idx), dec: idx === 0 ? p.dec0 : p.dec1 });
     });
   });
-  var rank = function(t){ return t.addr.toLowerCase() === WHYPE.toLowerCase() ? 0 : (t.addr.toLowerCase() === TUSD.toLowerCase() ? 1 : 2); };
+  var rank = function(t){ return t.addr.toLowerCase() === WHYPE.toLowerCase() ? 0 : (t.addr.toLowerCase() === USDC.toLowerCase() ? 1 : 2); };
   out.sort(function(x, y){ return rank(x) - rank(y) || x.sym.localeCompare(y.sym); });
   return out;
 }
@@ -3803,18 +3831,20 @@ function initAgg(){
   var opts = toks.map(function(t){ return '<option value="' + t.addr + '">' + esc(t.sym) + '</option>'; }).join("");
   $("aggIn").innerHTML = opts; $("aggOut").innerHTML = opts;
   var hype = toks.filter(function(t){ return t.addr.toLowerCase() === WHYPE.toLowerCase(); })[0];
-  var tusd = toks.filter(function(t){ return t.addr.toLowerCase() === TUSD.toLowerCase(); })[0];
+  var usdc = toks.filter(function(t){ return t.addr.toLowerCase() === USDC.toLowerCase(); })[0];
+  var other = toks.filter(function(t){ return t.addr.toLowerCase() !== WHYPE.toLowerCase(); })[0];
   if(hype) $("aggIn").value = hype.addr;
-  if(tusd) $("aggOut").value = tusd.addr;
+  if(usdc) $("aggOut").value = usdc.addr;
+  else if(other) $("aggOut").value = other.addr;
   aggSyncSym();
 }
 function renderAggRegistry(){
   var box = $("aggRows"); if(!box) return;
   box.innerHTML = AGG_SOURCES.map(function(s){
-    var pill = s.status === "live" ? '<span class="statuspill live">Live · testnet</span>' : '<span class="statuspill pending">Pending mainnet</span>';
+    var pill = s.status === "live" ? '<span class="statuspill live">Live · mainnet</span>' : (s.status === "viewonly" ? '<span class="statuspill soon">View-only</span>' : '<span class="statuspill pending">Pending deploy</span>');
     var router = s.router
       ? '<a href="' + EXPLORER + '/address/' + s.router + '" target="_blank" rel="noopener" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + shortAddr(s.router) + ' ↗</a>'
-      : '<span style="color:var(--muted2);font-family:ui-monospace,Menlo,monospace;font-size:12.5px">— not published</span>';
+      : '<span style="color:var(--muted2);font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + (s.status === "pending-deploy" ? "— pending deploy" : "— none verified") + '</span>';
     return '<div class="aggrow">' +
       '<div><div class="vname">' + esc(s.name) + '</div><div class="vnote">' + esc(s.note) + '</div></div>' +
       '<div style="font-size:13.5px;color:var(--muted)">' + esc(s.kind) + '</div>' +
@@ -3877,7 +3907,7 @@ async function runAggCompare(){
     }
     renderAggResults(rows, tIn, tOut, amtIn);
   } catch(e){
-    $("aggResults").innerHTML = '<div class="emptybox"><div class="et">Quotes unavailable</div>The testnet RPC dropped the quote requests. Try again in a moment.</div>';
+    $("aggResults").innerHTML = '<div class="emptybox"><div class="et">Quotes unavailable</div>The mainnet RPC dropped the quote requests. Try again in a moment.</div>';
   }
   btn.disabled = false; btn.textContent = "Compare routes";
 }
@@ -3907,13 +3937,14 @@ function renderAggResults(rows, tIn, tOut, amtIn){
       '<div class="outv" style="color:var(--muted2);font-weight:600">No pool</div><div class="delta">—</div></div>';
   });
   rows.filter(function(r){ return r.pending; }).forEach(function(r){
+    var vo = r.src.status === "viewonly";
     html += '<div class="qtrow"><div><span style="font-weight:800">' + esc(r.src.name) + '</span></div>' +
-      '<div style="font-size:13px;color:var(--muted2)">Adapter registered · router slot empty</div>' +
+      '<div style="font-size:13px;color:var(--muted2)">' + (vo ? 'Pools tracked in Markets · no verified router' : 'Deploys with Ladder\'s mainnet contracts') + '</div>' +
       '<div class="outv" style="color:var(--muted2);font-weight:600">—</div>' +
-      '<div class="delta"><span class="statuspill pending">Mainnet</span></div></div>';
+      '<div class="delta"><span class="statuspill ' + (vo ? 'soon' : 'pending') + '">' + (vo ? 'View-only' : 'Pending deploy') + '</span></div></div>';
   });
   if(!quoted.length && !rows.some(function(r){ return r.pending; }))
-    html = '<div class="emptybox"><div class="et">No route found</div>No live venue has a pool path for this pair on testnet.</div>';
+    html = '<div class="emptybox"><div class="et">No route found</div>No live venue has a pool path for this pair on mainnet.</div>';
   $("aggResults").innerHTML = html;
   $("aggStatBest").textContent = best ? best.src.name + " · " + aggPathLabel(best.path) : "No route";
 }
@@ -3923,14 +3954,14 @@ function renderAggResults(rows, tIn, tOut, amtIn){
   /* Multicall3 presence note: reads use JSON-RPC batching to the same end —
      one round-trip per group, with per-call fallback when the RPC drops a batch. */
   void MULTICALL;
-  try { drawSpark(JSON.parse(localStorage.getItem("lslp_snapshots_v1") || "[]")); } catch(e){ drawSpark([]); }
+  try { drawSpark(JSON.parse(localStorage.getItem("lslp_snapshots_v2") || "[]")); } catch(e){ drawSpark([]); }
   try {
     await loadPools();
     loadSwapBars();
   } catch(e){
-    $("poolRows").innerHTML = '<div class="emptybox"><div class="et">Could not reach the testnet RPC</div>The public RPC dropped the request. Reload the page to retry.</div>';
+    $("poolRows").innerHTML = '<div class="emptybox"><div class="et">Could not reach the mainnet RPC</div>The public RPC dropped the request. Reload the page to retry.</div>';
     $("tdTotals").innerHTML = '<span style="color:var(--muted);font-size:16px">RPC unreachable — reload to retry.</span>';
-    setStatus("marketsErr", "The testnet RPC could not be reached after several retries. Reload the page to try again.", "err");
+    setStatus("marketsErr", "The mainnet RPC could not be reached after several retries. Reload the page to try again.", "err");
   }
 })();
 </script>
