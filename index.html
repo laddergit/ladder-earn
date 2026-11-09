@@ -1351,6 +1351,8 @@ function friendlyErr(e){
   var m = (e.message || String(e));
   if(e.code === 4001 || /user rejected|denied transaction/i.test(m)) return "You rejected the request in your wallet. Nothing was sent.";
   if(/insufficient funds/i.test(m)) return "Insufficient balance to cover this transaction and gas.";
+  if(/INSUFFICIENT_B_AMOUNT/i.test(m)) return "Deposit rejected: the two amounts did not match the pool's live ratio, so the second token's router-optimal amount fell below its minimum (INSUFFICIENT_B_AMOUNT). The Deposit form now keeps both sides matched to the pool ratio — re-enter the amount and try again.";
+  if(/INSUFFICIENT_A_AMOUNT/i.test(m)) return "Deposit rejected: the two amounts did not match the pool's live ratio, so the first token's router-optimal amount fell below its minimum (INSUFFICIENT_A_AMOUNT). The Deposit form now keeps both sides matched to the pool ratio — re-enter the amount and try again.";
   if(/INSUFFICIENT|EXPIRED|transfer amount exceeds/i.test(m)) return "The transaction would fail at these amounts — the pool moved, the deadline passed, or a balance is short. Try a higher slippage or a smaller amount.";
   if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "The testnet RPC dropped the request. Wait a moment and try again — this RPC is known to hiccup.";
   return "The request could not be completed. Check your wallet and balances, then try again.";
@@ -1914,13 +1916,10 @@ function buildDetail(){
     '</div>';
   $("depInputs").innerHTML = [0,1].map(function(idx){
     var b = balOf(p, idx), dec = idx===0 ? p.dec0 : p.dec1;
-    return '<div class="amtbox"><div class="row1"><input id="depAmt' + idx + '" type="number" step="any" min="0" placeholder="0.0" oninput="refreshActionButtons()" /><span class="toksym">' + esc(dispSym(p, idx)) + '</span></div>' +
+    return '<div class="amtbox"><div class="row1"><input id="depAmt' + idx + '" type="number" step="any" min="0" placeholder="0.0" oninput="onDepInput(' + idx + ')" /><span class="toksym">' + esc(dispSym(p, idx)) + '</span></div>' +
       '<div class="row2"><span>Balance: ' + (account ? fmtUnits(b, dec) + ' ' + esc(dispSym(p, idx)) : '— connect wallet') + '</span><button class="maxbtn" onclick="depMax(' + idx + ')">MAX</button></div></div>';
   }).join("");
-  var hasRes = p.r0 > 0n && p.r1 > 0n;
-  $("ratioHelper").innerHTML = hasRes ?
-    'Pool is live — keep both sides in proportion so the deposit goes through at the best rate. <button onclick="matchRatio()">Match pool ratio</button>' :
-    'This pool has no reserves yet. Your deposit sets the starting price — double-check both amounts.';
+  updateDepRatioUI();
   $("wdBal").textContent = "Balance: " + (p.lpBal !== null && p.lpBal !== undefined ? fmtUnits(p.lpBal, 18) + " LP" : "—");
   $("wdAmount").value = "";
   setStatus("depStatus", ""); setStatus("wdStatus", "");
@@ -1947,21 +1946,118 @@ function depMax(idx){
     v = b > gas ? b - gas : 0n;
   }
   $("depAmt" + idx).value = fmtPlain(v, dec);
+  onDepInput(idx);
+}
+/* ================= Deposit ratio lock (Uniswap V2 addLiquidity rules) =================
+   For an EXISTING pool the Router never takes both desired amounts: it
+   quotes the second side from the live reserves (quote = amount * reserveB
+   / reserveA) and takes the smaller, ratio-matched pair. If a minimum is
+   set above that quoted amount the call reverts with
+   INSUFFICIENT_A_AMOUNT / INSUFFICIENT_B_AMOUNT — exactly the failure the
+   old form produced by sending two independently typed amounts and
+   deriving both minimums from them (1000 / 1000 into a ~109067 : 91709
+   pool: the router's optimal second side is ~840.85, below the 995
+   minimum the old code set, so every such deposit reverted). The fields
+   below are therefore ratio-locked on live pools, minimums are computed
+   from the router-optimal amounts, and the exact call is simulated with
+   eth_call before the wallet is ever asked to send it. A brand-new pool
+   (zero reserves) has no ratio to lock to — the depositor sets the
+   initial price, so both sides stay free there. */
+function poolLive(p){
+  return !!(p && p.r0 !== null && p.r0 !== undefined && p.r1 !== null && p.r1 !== undefined && p.r0 > 0n && p.r1 > 0n);
+}
+function routerOptimal(p, a0d, a1d){
+  /* Mirrors UniswapV2Router02._addLiquidity: the pair the router will
+     actually take for the given desired amounts at the stored reserves. */
+  if(!poolLive(p)) return { a0: a0d, a1: a1d };
+  var bOpt = a0d * p.r1 / p.r0;
+  if(bOpt <= a1d) return { a0: a0d, a1: bOpt };
+  return { a0: a1d * p.r0 / p.r1, a1: a1d };
+}
+function updateDepRatioUI(){
+  var p = currentPool, el = $("ratioHelper");
+  if(!el || !p) return;
+  if(!poolLive(p)){
+    el.innerHTML = 'This pool has no reserves yet, so there is no ratio to match — your deposit sets the starting price. Enter both amounts freely and double-check them.';
+    return;
+  }
+  var s0 = esc(dispSym(p, 0)), s1 = esc(dispSym(p, 1));
+  var r0f = parseFloat(fmtPlain(p.r0, p.dec0)), r1f = parseFloat(fmtPlain(p.r1, p.dec1));
+  var html = 'Live pool ratio: <b style="color:var(--text)">1 ' + s0 + ' ≈ ' + fmtPrice(r1f / r0f) + ' ' + s1 + '</b> · 1 ' + s1 + ' ≈ ' + fmtPrice(r0f / r1f) + ' ' + s0 + '.<br/>Amounts are ratio-locked — typing one side fills the other at this ratio, so the router accepts the pair instead of reverting.';
+  var a0 = $("depAmt0") ? parseUnits($("depAmt0").value, p.dec0) : null;
+  var a1 = $("depAmt1") ? parseUnits($("depAmt1").value, p.dec1) : null;
+  if(a0 !== null && a1 !== null && a0 > 0n && a1 > 0n){
+    var opt = routerOptimal(p, a0, a1), slip = slipVal("dep");
+    html += '<br/>Deposit preview: <b style="color:var(--text)">' + fmtUnits(opt.a0, p.dec0) + ' ' + s0 + ' + ' + fmtUnits(opt.a1, p.dec1) + ' ' + s1 + '</b> · minimum accepted at ' + slip + '% slippage: ' + fmtUnits(minOut(opt.a0, slip), p.dec0) + ' ' + s0 + ' / ' + fmtUnits(minOut(opt.a1, slip), p.dec1) + ' ' + s1 + '.';
+  }
+  el.innerHTML = html;
+}
+function onDepInput(idx){
+  var p = currentPool; if(!p) return;
+  if(poolLive(p)){
+    var src = $("depAmt" + idx), dst = $("depAmt" + (1 - idx));
+    if(src && dst){
+      var srcDec = idx === 0 ? p.dec0 : p.dec1, dstDec = idx === 0 ? p.dec1 : p.dec0;
+      if(src.value.trim() === ""){ dst.value = ""; }
+      else {
+        var v = parseUnits(src.value, srcDec);
+        if(v !== null){
+          /* Router.quote(amount, reserveIn, reserveOut) = amount * reserveOut / reserveIn */
+          if(v === 0n) dst.value = "";
+          else dst.value = fmtPlain(idx === 0 ? v * p.r1 / p.r0 : v * p.r0 / p.r1, dstDec);
+        }
+      }
+    }
+  }
+  updateDepRatioUI();
   refreshActionButtons();
 }
 function matchRatio(){
-  var p = currentPool; if(!p) return;
-  var a0 = parseUnits($("depAmt0").value, p.dec0), a1 = parseUnits($("depAmt1").value, p.dec1);
-  /* Router.quote(amountA, reserveA, reserveB) = amountA * reserveB / reserveA */
-  if(a0 !== null && a0 > 0n && p.r0 > 0n){
-    $("depAmt1").value = fmtPlain(a0 * p.r1 / p.r0, p.dec1);
-  } else if(a1 !== null && a1 > 0n && p.r1 > 0n){
-    $("depAmt0").value = fmtPlain(a1 * p.r0 / p.r1, p.dec0);
-  } else {
-    setStatus("depStatus", "Enter an amount on one side first, then match the ratio.", "info"); return;
+  var p = currentPool; if(!p || !poolLive(p)) return;
+  var a0 = parseUnits($("depAmt0").value, p.dec0);
+  if(a0 !== null && a0 > 0n){ onDepInput(0); setStatus("depStatus", "Paired amount filled from the live pool ratio.", "ok"); return; }
+  var a1 = parseUnits($("depAmt1").value, p.dec1);
+  if(a1 !== null && a1 > 0n){ onDepInput(1); setStatus("depStatus", "Paired amount filled from the live pool ratio.", "ok"); return; }
+  setStatus("depStatus", "Enter an amount on one side first — the other side fills itself at the pool ratio.", "info");
+}
+/* Pre-flight simulation: the exact deposit call, from the user's own
+   account (and with its ETH value for addLiquidityETH), through a single
+   eth_call — the same read path the app uses everywhere else. A revert is
+   final here: it is translated to plain words and the transaction is
+   never handed to the wallet. */
+async function simulateCall(to, data, valueHex){
+  var call = { from: account, to: to, data: data };
+  if(valueHex) call.value = valueHex;
+  return rpcCall("eth_call", [call, "latest"]);
+}
+function revertText(e){
+  var m = "";
+  try { m = String((e && e.message) || e || ""); if(e && e.data) m += " " + (typeof e.data === "string" ? e.data : JSON.stringify(e.data)); } catch(_){}
+  var i = m.indexOf("08c379a0");
+  if(i > -1){
+    try {
+      var hex = m.slice(i + 8), len = Number(BigInt("0x" + hex.slice(64, 128)));
+      if(len > 0 && len < 500){
+        var bytes = [];
+        for(var k = 0; k < len; k++) bytes.push(parseInt(hex.slice(128 + k * 2, 128 + k * 2 + 2), 16));
+        var s = new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+        if(s) return s;
+      }
+    } catch(_){}
   }
-  setStatus("depStatus", "Paired amount filled from the live pool ratio.", "ok");
-  refreshActionButtons();
+  return m;
+}
+function plainSimReason(e, p){
+  var raw = revertText(e), m = raw || "";
+  var s0 = esc(dispSym(p, 0)), s1 = esc(dispSym(p, 1));
+  if(/INSUFFICIENT_B_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s1 + " than the minimum set for it (INSUFFICIENT_B_AMOUNT). The form re-matches both sides to the live ratio; review the preview and try again.";
+  if(/INSUFFICIENT_A_AMOUNT/i.test(m)) return "the amounts are off the pool ratio — at the current price the router would take less " + s0 + " than the minimum set for it (INSUFFICIENT_A_AMOUNT). The form re-matches both sides to the live ratio; review the preview and try again.";
+  if(/EXPIRED/i.test(m)) return "the 20-minute deadline had already passed when the check ran. Nothing was sent — try again and confirm promptly in your wallet.";
+  if(/TRANSFER_FROM_FAILED|transfer amount exceeds|insufficient allowance|allowance/i.test(m)) return "the router cannot pull the tokens yet — an approval above is still missing, or a balance is short. Approve both tokens first, check your balances, then deposit.";
+  if(/INSUFFICIENT_LIQUIDITY/i.test(m)) return "the pool does not have enough liquidity for a deposit at these amounts. Try a smaller amount.";
+  if(/insufficient funds/i.test(m)) return "your wallet balance cannot cover this deposit plus gas. Lower the amount and try again.";
+  if(/failed to fetch|network|timeout|HTTP 5|HTTP 4|Empty RPC|Bad batch/i.test(m)) return "the pre-flight check itself could not be completed — the testnet RPC dropped the call, so Earn stopped rather than send a transaction it could not verify. Wait a moment and try again.";
+  return "the router rejected this deposit in a pre-flight check (" + esc(raw ? raw.slice(0, 140) : "unknown revert") + "). Nothing was sent. Check the amounts and approvals, then try again.";
 }
 function slipVal(which){
   var custom = $(which === "dep" ? "depSlipCustom" : "wdSlipCustom").value;
@@ -1976,9 +2072,9 @@ function bindSlip(prefix, set){
       b.classList.add("on"); set(parseFloat(b.getAttribute("data-s"))); $(prefix + "SlipCustom").value = "";
     });
   });
-  $(prefix + "SlipCustom").addEventListener("input", function(){ box.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); }); });
+  $(prefix + "SlipCustom").addEventListener("input", function(){ box.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); }); if(prefix === "dep" && typeof updateDepRatioUI === "function") updateDepRatioUI(); });
 }
-bindSlip("dep", function(v){ depSlippage = v; });
+bindSlip("dep", function(v){ depSlippage = v; if(typeof updateDepRatioUI === "function") updateDepRatioUI(); });
 bindSlip("wd", function(v){ wdSlippage = v; });
 $("wdChips").querySelectorAll("button").forEach(function(b){
   b.addEventListener("click", function(){
@@ -2004,8 +2100,12 @@ function refreshActionButtons(){
     var a0 = parseUnits($("depAmt0") ? $("depAmt0").value : "", p.dec0);
     var a1 = parseUnits($("depAmt1") ? $("depAmt1").value : "", p.dec1);
     var need = [];
-    if(a0 !== null && a0 > 0n && !isHype(p.token0)) need.push({ addr:p.token0, amt:a0, sym:dispSym(p,0), dec:p.dec0 });
-    if(a1 !== null && a1 > 0n && !isHype(p.token1)) need.push({ addr:p.token1, amt:a1, sym:dispSym(p,1), dec:p.dec1 });
+    /* Approvals cover what the router will actually pull — the
+       router-optimal (ratio-matched) amounts, not the raw desired ones. */
+    var n0 = a0, n1 = a1;
+    if(a0 !== null && a1 !== null && a0 > 0n && a1 > 0n && poolLive(p)){ var ro = routerOptimal(p, a0, a1); n0 = ro.a0; n1 = ro.a1; }
+    if(n0 !== null && n0 > 0n && !isHype(p.token0)) need.push({ addr:p.token0, amt:n0, sym:dispSym(p,0), dec:p.dec0 });
+    if(n1 !== null && n1 > 0n && !isHype(p.token1)) need.push({ addr:p.token1, amt:n1, sym:dispSym(p,1), dec:p.dec1 });
     da.innerHTML = '<div id="depApproveWrap"></div><button class="bigbtn" onclick="doDeposit()">Deposit</button>';
     checkDepApprovals(need);
   }
@@ -2072,36 +2172,50 @@ async function doApprove(tokenAddr, amount, statusId, done){
 }
 async function doDeposit(){
   var p = currentPool; if(!p || !walletProvider) return;
-  var a0 = parseUnits($("depAmt0").value, p.dec0), a1 = parseUnits($("depAmt1").value, p.dec1);
-  if(a0 === null || a1 === null || a0 === 0n || a1 === 0n){ setStatus("depStatus", "Enter an amount for both tokens.", "err"); return; }
+  var a0d = parseUnits($("depAmt0").value, p.dec0), a1d = parseUnits($("depAmt1").value, p.dec1);
+  if(a0d === null || a1d === null || a0d === 0n || a1d === 0n){ setStatus("depStatus", "Enter an amount for both tokens — for a live pool, typing one side fills the other at the pool ratio.", "err"); return; }
+  /* Router-optimal amounts: the ratio-matched pair the router will
+     actually take at the live reserves. The minimums are computed from
+     THESE amounts × (1 − slippage), never from the raw desired amounts —
+     deriving a minimum from a desired amount that exceeds the ratio is
+     what made every off-ratio deposit revert with INSUFFICIENT_B_AMOUNT. */
+  var opt = routerOptimal(p, a0d, a1d);
+  if(opt.a0 === 0n || opt.a1 === 0n){ setStatus("depStatus", "That amount is too small — at the pool ratio the paired side rounds to zero. Enter a larger amount.", "err"); return; }
   var b0 = balOf(p, 0), b1 = balOf(p, 1);
-  if(b0 !== null && a0 > b0){ setStatus("depStatus", "Insufficient " + esc(dispSym(p,0)) + " balance.", "err"); return; }
-  if(b1 !== null && a1 > b1){ setStatus("depStatus", "Insufficient " + esc(dispSym(p,1)) + " balance.", "err"); return; }
+  if(b0 !== null && opt.a0 > b0){ setStatus("depStatus", "Insufficient " + esc(dispSym(p,0)) + " balance.", "err"); return; }
+  if(b1 !== null && opt.a1 > b1){ setStatus("depStatus", "Insufficient " + esc(dispSym(p,1)) + " balance.", "err"); return; }
   var slip = slipVal("dep");
   var deadline = BigInt(Math.floor(Date.now()/1000) + 20*60);
-  setStatus("depStatus", "Deposit requested — confirm it in your wallet.", "info");
+  var data, valueHex;
+  if(isHype(p.token0) || isHype(p.token1)){
+    var hypeIdx = isHype(p.token0) ? 0 : 1, otherIdx = hypeIdx === 0 ? 1 : 0;
+    var otherAddr = otherIdx===0 ? p.token0 : p.token1;
+    var amtOtherD = otherIdx===0 ? a0d : a1d, amtHypeD = hypeIdx===0 ? a0d : a1d;
+    var amtOtherOpt = otherIdx===0 ? opt.a0 : opt.a1, amtHypeOpt = hypeIdx===0 ? opt.a0 : opt.a1;
+    data = encCall(SEL.addLiquidityETH, [
+      { t:"address", v: otherAddr }, { t:"uint", v: amtOtherD },
+      { t:"uint", v: minOut(amtOtherOpt, slip) }, { t:"uint", v: minOut(amtHypeOpt, slip) },
+      { t:"address", v: account }, { t:"uint", v: deadline }]);
+    valueHex = "0x" + amtHypeD.toString(16);
+  } else {
+    data = encCall(SEL.addLiquidity, [
+      { t:"address", v: p.token0 }, { t:"address", v: p.token1 },
+      { t:"uint", v: a0d }, { t:"uint", v: a1d },
+      { t:"uint", v: minOut(opt.a0, slip) }, { t:"uint", v: minOut(opt.a1, slip) },
+      { t:"address", v: account }, { t:"uint", v: deadline }]);
+  }
+  /* Pre-flight simulation of the exact call (same eth_call path the app
+     reads through): if it would revert, the reason is shown here in plain
+     words and the wallet is never asked to submit a failing transaction. */
+  setStatus("depStatus", "Checking this deposit on-chain before sending…", "info");
+  try { await simulateCall(ROUTER, data, valueHex); }
+  catch(simErr){ setStatus("depStatus", "Deposit not sent — " + plainSimReason(simErr, p), "err"); return; }
+  setStatus("depStatus", "Check passed — deposit requested, confirm it in your wallet.", "info");
   try {
-    var hash;
-    if(isHype(p.token0) || isHype(p.token1)){
-      var hypeIdx = isHype(p.token0) ? 0 : 1, otherIdx = hypeIdx === 0 ? 1 : 0;
-      var otherAddr = otherIdx===0 ? p.token0 : p.token1;
-      var amtOther = otherIdx===0 ? a0 : a1, amtHype = hypeIdx===0 ? a0 : a1;
-      var data = encCall(SEL.addLiquidityETH, [
-        { t:"address", v: otherAddr }, { t:"uint", v: amtOther },
-        { t:"uint", v: minOut(amtOther, slip) }, { t:"uint", v: minOut(amtHype, slip) },
-        { t:"address", v: account }, { t:"uint", v: deadline }]);
-      hash = await sendTx(ROUTER, data, "0x" + amtHype.toString(16));
-    } else {
-      var data2 = encCall(SEL.addLiquidity, [
-        { t:"address", v: p.token0 }, { t:"address", v: p.token1 },
-        { t:"uint", v: a0 }, { t:"uint", v: a1 },
-        { t:"uint", v: minOut(a0, slip) }, { t:"uint", v: minOut(a1, slip) },
-        { t:"address", v: account }, { t:"uint", v: deadline }]);
-      hash = await sendTx(ROUTER, data2);
-    }
+    var hash = await sendTx(ROUTER, data, valueHex);
     setStatus("depStatus", "Deposit sent: " + txLink(hash) + " — waiting for confirmation…", "info");
     await waitReceipt(hash);
-    recordActivity({ ts: Date.now(), type:"Deposit", pair: p.pair, sym0: dispSym(p,0), sym1: dispSym(p,1), dec0: p.dec0, dec1: p.dec1, amt0: a0.toString(), amt1: a1.toString(), hash: hash });
+    recordActivity({ ts: Date.now(), type:"Deposit", pair: p.pair, sym0: dispSym(p,0), sym1: dispSym(p,1), dec0: p.dec0, dec1: p.dec1, amt0: opt.a0.toString(), amt1: opt.a1.toString(), hash: hash });
     setStatus("depStatus", "Deposit confirmed. Tx " + txLink(hash) + " — refreshing your position…", "ok");
     await refreshDetail(false);
     setStatus("depStatus", "Deposit confirmed. Tx " + txLink(hash), "ok");
