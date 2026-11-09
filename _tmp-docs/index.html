@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Ladder Earn Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0a0a0a;
+        --panel: #131313;
+        --panel-2: #171717;
+        --panel-3: #1d1d1d;
+        --line: rgba(255, 255, 255, 0.09);
+        --line-strong: rgba(255, 255, 255, 0.16);
+        --ink: #f5f5f5;
+        --ink-2: #a3a3a3;
+        --ink-3: #737373;
+        --accent: #ffffff;
+        --accent-dim: rgba(255, 255, 255, 0.08);
+        --amber: #d4d4d4;
+        --amber-dim: rgba(255, 255, 255, 0.06);
+        --red: #e5e5e5;
+        --radius: 14px;
+        --sidebar-w: 264px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        font-size: 15.5px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      ::selection { background: var(--accent); color: #0a0a0a; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 0.86em;
+      }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      /* ---------- Layout ---------- */
+      .layout {
+        display: grid;
+        grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+        max-width: 1240px;
+        margin: 0 auto;
+      }
+
+      /* ---------- Sidebar ---------- */
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding: 28px 20px 40px 28px;
+        border-right: 1px solid var(--line);
+        scrollbar-width: thin;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-bottom: 6px;
+      }
+      .brand .star {
+        width: 30px; height: 30px;
+        display: grid; place-items: center;
+        background: var(--accent);
+        border-radius: 9px;
+        flex: none;
+      }
+      .brand .star svg { width: 17px; height: 17px; display: block; }
+      .brand .name {
+        font-family: "Newsreader", Georgia, serif;
+        font-size: 21px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        color: var(--ink);
+        line-height: 1.1;
+      }
+      .brand .sub {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-top: 2px;
+      }
+      .nav-group { margin-top: 26px; }
+      .nav-group h4 {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .nav-group a {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 6px 10px;
+        margin-left: -10px;
+        border-radius: 8px;
+        color: var(--ink-2);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .nav-group a:hover { color: var(--ink); background: var(--panel-2); text-decoration: none; }
+      .nav-group a.active { color: var(--accent); background: var(--accent-dim); }
+      .nav-group a .dot {
+        width: 5px; height: 5px; border-radius: 50%;
+        background: currentColor; opacity: 0.45; flex: none;
+      }
+      .nav-group a.active .dot { opacity: 1; }
+      .side-links {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .side-links a {
+        display: flex; align-items: center; gap: 9px;
+        color: var(--ink-2); font-size: 13.5px; font-weight: 500;
+        padding: 5px 0;
+      }
+      .side-links a:hover { color: var(--accent); text-decoration: none; }
+      .side-links svg { width: 15px; height: 15px; flex: none; opacity: 0.8; }
+
+      /* Mobile top bar */
+      .topbar {
+        display: none;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(10, 10, 10, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        padding: 12px 18px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .topbar .brand { margin: 0; }
+      .menu-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--panel-2);
+        border: 1px solid var(--line-strong);
+        color: var(--ink);
+        font: inherit; font-size: 13.5px; font-weight: 600;
+        padding: 8px 14px; border-radius: 9px; cursor: pointer;
+      }
+      .menu-btn svg { width: 16px; height: 16px; }
+
+      /* ---------- Content ---------- */
+      .content {
+        padding: 44px 48px 90px;
+        min-width: 0;
+        max-width: 860px;
+      }
+      section { scroll-margin-top: 28px; padding-top: 18px; }
+      section + section { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 44px; }
+      h1, h2, h3 { font-family: "Newsreader", Georgia, serif; font-weight: 600; color: var(--ink); }
+      h1 { font-size: 40px; line-height: 1.12; margin: 0 0 14px; letter-spacing: -0.01em; }
+      h2 { font-size: 30px; line-height: 1.2; margin: 0 0 14px; letter-spacing: -0.005em; }
+      h3 { font-size: 20px; line-height: 1.3; margin: 30px 0 10px; }
+      p { margin: 0 0 14px; color: var(--ink-2); }
+      p strong, li strong { color: var(--ink); font-weight: 600; }
+      ul, ol { margin: 0 0 16px; padding-left: 22px; color: var(--ink-2); }
+      li { margin-bottom: 7px; }
+      li::marker { color: var(--ink-3); }
+      .lede { font-size: 17.5px; line-height: 1.6; color: var(--ink-2); }
+      .lede strong { color: var(--ink); }
+
+      /* Status banner */
+      .status-banner {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        background: var(--accent-dim);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: var(--radius);
+        padding: 13px 18px;
+        margin: 22px 0 30px;
+      }
+      .status-banner .pulse {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--accent); flex: none;
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55);
+        animation: pulse 2.2s infinite;
+      }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45); }
+        70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .status-banner .pulse { animation: none; }
+        html { scroll-behavior: auto; }
+      }
+      .status-banner .txt { font-weight: 700; letter-spacing: 0.08em; font-size: 13px; color: var(--accent); }
+      .status-banner .sub { font-size: 13.5px; color: var(--ink-2); letter-spacing: 0; font-weight: 400; }
+
+      /* Badges */
+      .badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+        padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+        vertical-align: middle;
+      }
+      .badge.live { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(255,255,255,0.28); }
+      .badge.testnet { background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line-strong); }
+      .badge.planned { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,255,255,0.22); }
+      .badge.viewonly { background: var(--panel-3); color: var(--ink-3); border: 1px solid var(--line-strong); }
+      .badge.verified { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(255,255,255,0.28); }
+
+      /* Cards & callouts */
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 22px; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+      }
+      .card h4 {
+        margin: 0 0 7px; font-size: 15px; font-weight: 600; color: var(--ink);
+        display: flex; align-items: center; gap: 9px;
+      }
+      .card h4 svg { width: 17px; height: 17px; color: var(--accent); flex: none; }
+      .card p { margin: 0; font-size: 14px; }
+      .callout {
+        border-radius: var(--radius);
+        padding: 16px 19px;
+        margin: 18px 0 22px;
+        font-size: 14.5px;
+      }
+      .callout p { margin: 0 0 8px; }
+      .callout p:last-child { margin-bottom: 0; }
+      .callout .ttl { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 7px; display: block; }
+      .callout.warn { background: var(--amber-dim); border: 1px solid rgba(255,255,255,0.20); }
+      .callout.warn .ttl { color: var(--amber); }
+      .callout.warn p { color: #d4d4d4; }
+      .callout.note { background: var(--panel); border: 1px solid var(--line); }
+      .callout.note .ttl { color: var(--accent); }
+      .callout.danger { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.22); }
+      .callout.danger .ttl { color: var(--red); }
+      .callout.danger p { color: #d4d4d4; }
+
+      /* Steps */
+      .steps { counter-reset: step; list-style: none; padding: 0; margin: 18px 0 22px; }
+      .steps li {
+        counter-increment: step;
+        position: relative;
+        padding: 2px 0 18px 46px;
+        margin: 0;
+      }
+      .steps li::before {
+        content: counter(step);
+        position: absolute; left: 0; top: 0;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: var(--panel-3);
+        border: 1px solid var(--line-strong);
+        color: var(--accent);
+        font-size: 13.5px; font-weight: 700;
+        display: grid; place-items: center;
+      }
+      .steps li:not(:last-child)::after {
+        content: ""; position: absolute; left: 15px; top: 36px; bottom: 2px;
+        width: 1px; background: var(--line);
+      }
+      .steps .st { font-weight: 600; color: var(--ink); display: block; margin-bottom: 3px; }
+      .steps p { margin: 0; font-size: 14.5px; }
+
+      /* Tables */
+      .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0 22px; background: var(--panel); }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px; }
+      th, td { text-align: left; padding: 11px 16px; vertical-align: top; }
+      th {
+        font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--ink-3); font-weight: 600;
+        border-bottom: 1px solid var(--line-strong);
+        background: var(--panel-2);
+      }
+      td { color: var(--ink-2); border-bottom: 1px solid var(--line); }
+      tr:last-child td { border-bottom: none; }
+      td strong { color: var(--ink); }
+
+      /* Contract / address rows */
+      .addr-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 22px; }
+      .addr-row {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 11px 14px;
+      }
+      .addr-row .lbl { font-weight: 600; color: var(--ink); font-size: 13.5px; min-width: 108px; }
+      .addr-row .val {
+        font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+        color: var(--ink-2); word-break: break-all; flex: 1; min-width: 200px;
+      }
+      .copy-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--panel-3); border: 1px solid var(--line-strong);
+        color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 600;
+        padding: 6px 11px; border-radius: 8px; cursor: pointer; flex: none;
+      }
+      .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .copy-btn svg { width: 13px; height: 13px; }
+      .copy-btn.done { color: var(--accent); border-color: var(--accent); }
+
+      .net-head {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        margin: 26px 0 6px;
+      }
+      .net-head h3 { margin: 0; }
+      .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 18px; margin: 14px 0 18px; font-size: 14.5px; }
+      .kv dt { color: var(--ink-3); font-weight: 500; }
+      .kv dd { margin: 0; color: var(--ink-2); word-break: break-word; }
+      .kv dd strong { color: var(--ink); }
+      .tbd { color: var(--ink-3); font-style: italic; }
+
+      .formula {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        margin: 16px 0 20px;
+        font-family: "Newsreader", Georgia, serif;
+        font-size: 19px;
+        text-align: center;
+        color: var(--ink);
+      }
+      .formula em { color: var(--accent); font-style: italic; }
+
+      details.faq {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      details.faq summary {
+        cursor: pointer;
+        padding: 15px 19px;
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 15px;
+        list-style: none;
+        display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      }
+      details.faq summary::-webkit-details-marker { display: none; }
+      details.faq summary .chev { color: var(--ink-3); transition: transform 0.2s; flex: none; display: flex; }
+      details.faq summary .chev svg { width: 16px; height: 16px; }
+      details.faq[open ] summary .chev { transform: rotate(180deg); }
+      details.faq .body { padding: 0 19px 16px; }
+      details.faq .body p { font-size: 14.5px; margin: 0; }
+
+      .foot {
+        margin-top: 60px; padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 13.5px; color: var(--ink-3);
+        display: flex; flex-wrap: wrap; gap: 8px 22px;
+      }
+
+      /* ---------- Mobile ---------- */
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .topbar { display: flex; }
+        .sidebar {
+          display: none;
+          position: static;
+          height: auto;
+          border-right: none;
+          border-bottom: 1px solid var(--line);
+          padding: 18px 20px 26px;
+        }
+        .sidebar.open { display: block; }
+        .sidebar .brand { display: none; }
+        .content { padding: 30px 20px 70px; }
+        h1 { font-size: 32px; }
+        h2 { font-size: 25px; }
+        .grid-2 { grid-template-columns: 1fr; }
+        .kv { grid-template-columns: 1fr; gap: 2px 0; }
+        .kv dd { margin-bottom: 8px; }
+        section { scroll-margin-top: 76px; }
+      }
+      /* Stack reference tables instead of letting them scroll sideways */
+      @media (max-width: 640px) {
+        .tbl-wrap { overflow-x: visible; }
+        table { min-width: 0; }
+        table thead { display: none; }
+        table, table tbody, table tr, table td { display: block; width: 100%; }
+        table tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+        table tr:last-child { border-bottom: none; }
+        table td { border-bottom: none; padding: 4px 16px; }
+        table td:first-child { padding-top: 8px; }
+        table td:last-child { padding-bottom: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="brand">
+        <span class="star" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 14.6 9.4 21.5 12 14.6 14.6 12 21.5 9.4 14.6 2.5 12 9.4 9.4Z" fill="#0a0a0a"/></svg>
+        </span>
+        <span>
+          <span class="name">Ladder Earn</span>
+          <span class="sub" style="display:block">Documentation</span>
+        </span>
+      </div>
+      <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        Menu
+      </button>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <span class="star" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 14.6 9.4 21.5 12 14.6 14.6 12 21.5 9.4 14.6 2.5 12 9.4 9.4Z" fill="#0a0a0a"/></svg>
+          </span>
+          <span>
+            <span class="name">Ladder Earn</span>
+            <span class="sub" style="display:block">Documentation</span>
+          </span>
+        </div>
+
+        <nav aria-label="Documentation">
+          <div class="nav-group">
+            <h4>Start here</h4>
+            <a href="#overview" data-nav="overview"><span class="dot"></span>Overview</a>
+            <a href="#getting-started" data-nav="getting-started"><span class="dot"></span>Getting Started</a>
+          </div>
+          <div class="nav-group">
+            <h4>Using Earn</h4>
+            <a href="#markets" data-nav="markets"><span class="dot"></span>Markets</a>
+            <a href="#swap" data-nav="swap"><span class="dot"></span>Swap</a>
+            <a href="#pools" data-nav="pools"><span class="dot"></span>Pools &amp; Liquidity</a>
+            <a href="#portfolio" data-nav="portfolio"><span class="dot"></span>Portfolio</a>
+          </div>
+          <div class="nav-group">
+            <h4>Protocol</h4>
+            <a href="#vote" data-nav="vote"><span class="dot"></span>Vote / veLDR</a>
+            <a href="#aggregator" data-nav="aggregator"><span class="dot"></span>Aggregator</a>
+            <a href="#analytics" data-nav="analytics"><span class="dot"></span>Analytics</a>
+          </div>
+          <div class="nav-group">
+            <h4>Reference</h4>
+            <a href="#contracts" data-nav="contracts"><span class="dot"></span>Networks &amp; Contracts</a>
+            <a href="#faq" data-nav="faq"><span class="dot"></span>FAQ &amp; Risks</a>
+          </div>
+        </nav>
+
+        <div class="side-links">
+          <a href="https://earn.ladderswap.trade" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+            Open the app
+          </a>
+          <a href="https://ladderswap.trade" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+            ladderswap.trade
+          </a>
+          <a href="https://x.com/ladderswap" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.3 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1 2h6.5l4.4 5.9L18.9 2Zm-1.1 18h1.7L7.6 3.9H5.8L17.8 20Z"/></svg>
+            @ladderswap on X
+          </a>
+        </div>
+      </aside>
+
+      <main class="content">
+
+        <!-- ============ 1. OVERVIEW ============ -->
+        <section id="overview">
+          <h1>Ladder Earn</h1>
+          <p class="lede">Ladder Earn is the liquidity app for <strong>Ladder</strong>, the Uniswap V2–style exchange on <strong>Elysium</strong>. It puts every pool on Elysium in one place — Ladder's own pools alongside pools from other DEXes — so you can compare markets, swap, and provide liquidity without hopping between apps.</p>
+
+          <div class="status-banner" role="status">
+            <span class="pulse" aria-hidden="true"></span>
+            <span class="txt">LIVE ON ELYSIUM TESTNET</span>
+            <span class="sub">Chain ID 99801 · Testnet assets have no monetary value</span>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Markets</h4>
+              <p>One pool table for the whole chain, with a badge showing which DEX each pool belongs to. TVL, volume and APR are computed from on-chain data — see <a href="#analytics">how the numbers work</a>.</p>
+            </div>
+            <div class="card">
+              <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H9"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12"/></svg>Swap</h4>
+              <p>Quotes compare Ladder pools and verified external venues, then route directly or through a HYPE / tUSD hop — whichever gives you more out.</p>
+            </div>
+            <div class="card">
+              <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>Pools &amp; Liquidity</h4>
+              <p>Add or remove liquidity on Ladder pools and hold the LP tokens in your wallet. The 0.3% swap fee grows inside the pool itself.</p>
+            </div>
+            <div class="card">
+              <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Portfolio</h4>
+              <p>Your LP positions, wallet balances and recent activity in one view, with an estimate of the fees your positions have earned.</p>
+            </div>
+          </div>
+
+          <h3>How Earn relates to Ladder</h3>
+          <p>Ladder is the exchange protocol: a factory, a router and Uniswap V2–style pools, introduced at <a href="https://ladderswap.trade" target="_blank" rel="noopener">ladderswap.trade</a>. Ladder Earn is the primary app built on top of it. Pools created through Ladder's Launchpad graduate into Ladder's router, so they show up in Earn's Markets automatically. Earn adds the multi-DEX market view, route-aware quoting and portfolio tracking around those pools.</p>
+          <p>Everything in these docs is written network-agnostic: the guides stay the same on mainnet. Only the <a href="#contracts">Networks &amp; Contracts</a> section and the status labels change when networks change.</p>
+        </section>
+
+        <!-- ============ 2. GETTING STARTED ============ -->
+        <section id="getting-started">
+          <h2>Getting Started</h2>
+          <p>You need an EVM wallet and some testnet HYPE for gas. The whole setup takes a couple of minutes.</p>
+
+          <ol class="steps">
+            <li>
+              <span class="st">Connect your wallet</span>
+              <p>Open <a href="https://earn.ladderswap.trade" target="_blank" rel="noopener">earn.ladderswap.trade</a> and click <strong>Connect</strong>. Earn discovers installed wallets automatically (EIP-6963), so MetaMask, Rabby and other injected wallets appear in the list — pick yours and approve the connection in the wallet.</p>
+            </li>
+            <li>
+              <span class="st">Add the Elysium Testnet network</span>
+              <p>If your wallet doesn't know the network yet, Earn offers to add it. You can also add it manually with the details below. Approving the network add does not move any funds.</p>
+            </li>
+            <li>
+              <span class="st">Get testnet HYPE</span>
+              <p>HYPE is the gas token. Claim free testnet HYPE from the Elysium faucet linked in the app — testnet HYPE is valueless and exists only to pay gas and to trade against test tokens like tUSD.</p>
+            </li>
+            <li>
+              <span class="st">You're ready</span>
+              <p>Browse <a href="#markets">Markets</a>, make a <a href="#swap">swap</a>, or add your first <a href="#pools">liquidity position</a>.</p>
+            </li>
+          </ol>
+
+          <h3>Network details — Elysium Testnet</h3>
+          <dl class="kv">
+            <dt>Network name</dt><dd><strong>Elysium Testnet</strong></dd>
+            <dt>Chain ID</dt><dd><strong>99801</strong></dd>
+            <dt>RPC URL</dt><dd><code>https://testnet-rpc.elysium.kinetiq.xyz</code></dd>
+            <dt>Explorer</dt><dd><a href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener">elysium.kinetiq.xyz/testnet-explorer</a></dd>
+            <dt>Gas token</dt><dd><strong>HYPE</strong> (testnet)</dd>
+          </dl>
+
+          <div class="callout note">
+            <span class="ttl">Tip</span>
+            <p>Use a <strong>separate wallet (or account) for testnet</strong> that you never use for real funds. It keeps test approvals and experiments away from anything that matters — see <a href="#faq">Risks</a>.</p>
+          </div>
+        </section>
+
+        <!-- ============ 3. MARKETS ============ -->
+        <section id="markets">
+          <h2>Markets</h2>
+          <p>The Markets page is a single table of liquidity pools across Elysium. Ladder pools are merged with the top external V2 factories' HYPE and tUSD pools, and every row carries a <strong>DEX badge</strong> so you always know whose pool you are looking at.</p>
+
+          <h3>Reading the table</h3>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th style="width:22%">Column</th><th style="width:40%">What it means</th><th>Where it comes from</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Pool / DEX</strong></td><td>The token pair and the DEX that operates the pool.</td><td>The pool's factory contract.</td></tr>
+                <tr><td><strong>TVL</strong></td><td>Total value locked, priced from the pool's own reserves.</td><td>Live reserve balances read on-chain.</td></tr>
+                <tr><td><strong>Volume</strong></td><td>Trading volume over the recent window shown in the app.</td><td><code>Swap</code> events from the last <strong>2,000 blocks</strong>.</td></tr>
+                <tr><td><strong>Fees</strong></td><td>Fees generated by those swaps (0.3% of volume on V2 pools).</td><td>Derived from the same <code>Swap</code> events.</td></tr>
+                <tr><td><strong>APR</strong></td><td>Annualised fee return for liquidity providers.</td><td>Only shown after <strong>at least 1 hour</strong> of fee-growth snapshots — before that you'll see a dash, not a guess.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>External pools</h3>
+          <p>Most external pools are <span class="badge viewonly">View-only</span> in Earn: you can inspect their reserves, volume and fees, but you can't deposit into or withdraw from another DEX's pool through Earn, and your funds never route through Ladder's router into another DEX's pair. The one exception is the <strong>verified external router</strong> covered in <a href="#swap">Swap</a>, whose pools can be quoted and traded through that DEX's own router.</p>
+
+          <div class="callout note">
+            <span class="ttl">Why a dash instead of 0%?</span>
+            <p>APR needs a time window to mean anything. Earn snapshots fee growth and refuses to annualise a few minutes of activity into a fantasy number. If a pool is new, its APR simply appears once an hour of data exists.</p>
+          </div>
+        </section>
+
+        <!-- ============ 4. SWAP ============ -->
+        <section id="swap">
+          <h2>Swap</h2>
+          <p>Earn's swap is route-aware: instead of quoting a single pool, it asks every venue it can trade on and shows you the best result.</p>
+
+          <h3>How quoting works</h3>
+          <ol class="steps">
+            <li>
+              <span class="st">Pick a pair and an amount</span>
+              <p>Enter the token and amount you want to sell. Native HYPE is handled for you — it's wrapped to WHYPE and unwrapped behind the scenes.</p>
+            </li>
+            <li>
+              <span class="st">Venues are compared</span>
+              <p>Earn quotes the direct pool on Ladder, the direct pool on the verified external venue, and one-hop routes through <strong>HYPE</strong> or <strong>tUSD</strong> on each. The route that returns the most of the output token wins.</p>
+            </li>
+            <li>
+              <span class="st">Review, approve, swap</span>
+              <p>Check the expected output, price impact and minimum received, then confirm. The swap executes through the winning venue's own router — Ladder's router for Ladder pools, the external DEX's router for its pools.</p>
+            </li>
+          </ol>
+
+          <h3>Slippage &amp; price impact</h3>
+          <ul>
+            <li><strong>Slippage tolerance</strong> — your swap reverts if the price moves against you by more than your setting before it lands. The "minimum received" figure in the review is your amount out after slippage.</li>
+            <li><strong>Price impact</strong> — how much your own trade moves the pool price. Earn shows a <strong>warning when impact exceeds 1%</strong>; on thin pools, consider splitting the trade or reducing the size.</li>
+            <li><strong>Approvals are exact-amount.</strong> When a token needs an allowance, Earn requests approval for the exact amount of that swap — never an unlimited approval. A new swap for a larger amount asks again.</li>
+          </ul>
+
+          <h3>The verified external router <span class="badge verified">Verified</span></h3>
+          <p>Exactly one external venue is verified for trading in Earn today. Its pools — including the <strong>NVDAx</strong> and <strong>TSLAx</strong> markets — quote and execute through that DEX's own router:</p>
+          <div class="addr-list">
+            <div class="addr-row">
+              <span class="lbl">Factory</span>
+              <span class="val">0x25aa924d70b1f8e5150d2156716fd003f4692164</span>
+              <button class="copy-btn" data-copy="0x25aa924d70b1f8e5150d2156716fd003f4692164" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+            <div class="addr-row">
+              <span class="lbl">Router</span>
+              <span class="val">0x49fad54421d6b81c487d5ab52c3d88e84ec6f416</span>
+              <button class="copy-btn" data-copy="0x49fad54421d6b81c487d5ab52c3d88e84ec6f416" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+          </div>
+          <p>All other external factories remain view-only until their routers are verified the same way.</p>
+
+          <h3>"No route" and quote timeouts</h3>
+          <ul>
+            <li>Quotes are given <strong>12 seconds</strong>. If a venue can't answer in time, it's left out of that quote rather than guessed.</li>
+            <li>If a quote call <strong>reverts</strong>, that venue has no usable route for the pair — the result is final for that venue and won't be retried mid-quote.</li>
+            <li>If every venue fails, Earn shows <strong>No route</strong>. That means no pool (direct or via HYPE/tUSD) can serve the pair right now — usually because a pool doesn't exist or has no liquidity yet.</li>
+          </ul>
+        </section>
+
+        <!-- ============ 5. POOLS & LIQUIDITY ============ -->
+        <section id="pools">
+          <h2>Pools &amp; Liquidity</h2>
+          <p>Providing liquidity means depositing a pair of tokens into a Ladder pool so others can swap against it. In return you receive <strong>LP tokens</strong> representing your share of the pool.</p>
+
+          <h3>Add liquidity</h3>
+          <ol class="steps">
+            <li>
+              <span class="st">Choose a Ladder pool</span>
+              <p>Pick a pair from Markets, or create the pool if it's the pair's first one. Deposits and withdrawals are supported on <strong>Ladder pools only</strong> — external pools stay view-only.</p>
+            </li>
+            <li>
+              <span class="st">Enter amounts</span>
+              <p>Deposits follow the pool's current price ratio: enter one side and Earn fills the matching amount of the other token. For a brand-new pool, your deposit sets the starting price — double-check it against a reference price.</p>
+            </li>
+            <li>
+              <span class="st">Approve &amp; supply</span>
+              <p>Approve each token for the exact deposit amount, then confirm the supply transaction. You receive LP tokens proportional to your share of the pool.</p>
+            </li>
+          </ol>
+
+          <h3>Remove liquidity</h3>
+          <p>Choose how much of your position to withdraw (up to 100%), approve spending the LP tokens if asked, and confirm. You receive both tokens back in the pool's current ratio, including your share of the fees the pool has collected.</p>
+
+          <h3>How the 0.3% fee works — honestly</h3>
+          <p>Every swap on a Ladder pool pays a <strong>0.3% fee</strong>. In a Uniswap V2 design there is <strong>no separate fee vault and no claim button</strong>: the fee never leaves the pool. It simply stays in the reserves, so each LP token becomes redeemable for slightly more of both tokens than before. Your earnings are realised when you withdraw — the longer fees accumulate, the more your LP tokens are worth relative to what you deposited.</p>
+          <div class="callout warn">
+            <span class="ttl">Impermanent loss</span>
+            <p>If the price of one token in the pair moves a lot relative to the other, you can withdraw less value than if you had just held the two tokens. Fees compensate for this, but they don't eliminate it. Only provide liquidity in pairs you understand.</p>
+          </div>
+        </section>
+
+        <!-- ============ 6. PORTFOLIO ============ -->
+        <section id="portfolio">
+          <h2>Portfolio</h2>
+          <p>The Portfolio page is your position overview for the connected wallet:</p>
+          <ul>
+            <li><strong>LP positions</strong> — every Ladder pool where your wallet holds LP tokens, your share of the pool, and what that share is currently redeemable for.</li>
+            <li><strong>Fees earned (estimate)</strong> — the difference between what your position is worth now and the value you deposited, attributed to accumulated swap fees. It's an estimate: price movement between deposit and now also affects it, and the figure is computed from live reserves, not promised anywhere on-chain as a separate balance.</li>
+            <li><strong>Activity</strong> — a log of your swaps, deposits and withdrawals. The activity log is kept <strong>on this device, in this browser</strong> — clear your browser data and it's gone; your on-chain history is always available in the explorer regardless.</li>
+          </ul>
+          <div class="callout note">
+            <span class="ttl">Nothing is custodied</span>
+            <p>LP tokens live in your own wallet, not in Earn. Disconnecting, switching devices or never opening Earn again doesn't change your positions — withdraw any time by reconnecting the same wallet.</p>
+          </div>
+        </section>
+
+        <!-- ============ 7. VOTE / veLDR ============ -->
+        <section id="vote">
+          <h2>Vote / veLDR <span class="badge planned">Planned for mainnet — not live yet</span></h2>
+          <p>Vote is the planned governance and fee-direction layer for Ladder, following the <strong>ve(3,3)</strong> model. It is part of the mainnet roadmap: <strong>there is no locking, voting or veLDR on testnet today</strong>, and any figures shown here describe the planned parameters, not a live system.</p>
+
+          <h3>The planned model</h3>
+          <ul>
+            <li><strong>Lock LDR, get veLDR.</strong> Lock LDR for between <strong>1 and 104 weeks</strong>, or choose <strong>auto-max</strong> to keep the lock permanently at maximum length.</li>
+            <li><strong>Voting weight decays with time</strong> unless you extend or auto-max:</li>
+          </ul>
+          <div class="formula">weight = <em>locked LDR</em> × <em>weeks remaining</em> ÷ 105</div>
+          <ul>
+            <li><strong>Vote on pool incentives.</strong> Each epoch, veLDR holders direct emissions toward the pools they vote for; pools that attract votes receive a larger share of that epoch's incentives.</li>
+            <li><strong>Epochs</strong> run weekly and flip on <strong>Tuesday 00:00 UTC</strong>. Votes and weights are snapshot per epoch.</li>
+          </ul>
+          <div class="callout warn">
+            <span class="ttl">Roadmap, not a promise of figures</span>
+            <p>Parameters above are the design Earn is being built toward for mainnet. Emission rates, fee sharing and launch timing will be announced with the mainnet release — nothing on this page is a live yield or a return guarantee.</p>
+          </div>
+        </section>
+
+        <!-- ============ 8. AGGREGATOR ============ -->
+        <section id="aggregator">
+          <h2>Aggregator</h2>
+          <p>Earn is built as an aggregator over Elysium's DEX venues: a registry of factories and routers that quoting can draw from. A venue only becomes tradable after its router has been verified against its factory on-chain; everything else is displayed view-only.</p>
+
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th style="width:26%">Venue</th><th style="width:20%">Status</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Ladder</strong></td>
+                  <td><span class="badge live">Live</span></td>
+                  <td>Ladder's own V2 pools. Full support: markets, swap, add/remove liquidity.</td>
+                </tr>
+                <tr>
+                  <td><strong>Verified external venue</strong></td>
+                  <td><span class="badge verified">Verified</span></td>
+                  <td>One external V2 router verified so far — factory <code>0x25aa…2164</code>, router <code>0x49fa…6f416</code>. Its pools (incl. NVDAx / TSLAx) trade through its own router. See <a href="#swap">Swap</a>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Nest</strong></td>
+                  <td><span class="badge planned">Pending mainnet</span></td>
+                  <td>To be registered once its mainnet deployment is published and verified.</td>
+                </tr>
+                <tr>
+                  <td><strong>Dawn DEX</strong></td>
+                  <td><span class="badge planned">Pending mainnet</span></td>
+                  <td>To be registered once its mainnet deployment is published and verified.</td>
+                </tr>
+                <tr>
+                  <td><strong>Uniswap V3 via Citadel / Supercolony</strong></td>
+                  <td><span class="badge planned">Pending mainnet</span></td>
+                  <td>Concentrated-liquidity venue; integration follows its mainnet launch.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Two rules hold for every venue, now and at mainnet: funds are never routed through Ladder's router into another DEX's pair — each venue executes through its own router — and no venue is listed as tradable before its contracts are verified.</p>
+        </section>
+
+        <!-- ============ 9. ANALYTICS ============ -->
+        <section id="analytics">
+          <h2>Analytics</h2>
+          <p>Every number in Earn is computed from chain data at the moment you look at it. There is no off-chain price feed, no admin-entered figure, and no smoothing to make a pool look busier than it is.</p>
+          <h3>The rules</h3>
+          <ul>
+            <li><strong>Reserves are read live.</strong> TVL and swap quotes come from the pools' current on-chain reserves, priced against HYPE / tUSD pairs.</li>
+            <li><strong>Volume and fees come from events.</strong> Earn scans <code>Swap</code> events over the most recent <strong>2,000 blocks</strong> — a window imposed by the public RPC's log limit — and totals them. Older activity outside that window is not included, and the window is stated rather than hidden.</li>
+            <li><strong>APR needs history.</strong> Fee-growth snapshots are taken over time; a pool's APR appears only once at least <strong>1 hour</strong> of snapshots exists. Short-window annualisation is deliberately not done.</li>
+            <li><strong>Estimates are labelled as estimates.</strong> Portfolio fee earnings are derived by comparing your position's current redeemable value with your deposits — price movement is part of that number, and the docs and the UI both say so.</li>
+          </ul>
+          <div class="callout note">
+            <span class="ttl">Verify it yourself</span>
+            <p>Every pool, position and transaction can be checked independently in the <a href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener">Elysium explorer</a> using the contract addresses in the next section. If a figure in Earn ever disagrees with the chain, the chain is right.</p>
+          </div>
+        </section>
+
+        <!-- ============ 10. NETWORKS & CONTRACTS ============ -->
+        <section id="contracts">
+          <h2>Networks &amp; Contracts</h2>
+          <p>All network-specific data for Ladder Earn lives on this page section and in the status banner at the top — the guides above never change between networks. When mainnet launches, this section is what gets updated.</p>
+
+          <div class="net-head">
+            <h3>Elysium Testnet</h3>
+            <span class="badge live">Current</span>
+            <span class="badge testnet">Chain ID 99801</span>
+          </div>
+          <dl class="kv">
+            <dt>RPC URL</dt><dd><code>https://testnet-rpc.elysium.kinetiq.xyz</code></dd>
+            <dt>Explorer</dt><dd><a href="https://elysium.kinetiq.xyz/testnet-explorer" target="_blank" rel="noopener">elysium.kinetiq.xyz/testnet-explorer</a></dd>
+            <dt>Gas token</dt><dd><strong>HYPE</strong> (testnet — no monetary value)</dd>
+          </dl>
+
+          <p style="margin-bottom:4px"><strong style="color:var(--ink)">Ladder contracts — testnet</strong></p>
+          <div class="addr-list">
+            <div class="addr-row">
+              <span class="lbl">WHYPE</span>
+              <span class="val">0xCD57F65c2B0e5881CFC2E609F7CD53b746E1F234</span>
+              <button class="copy-btn" data-copy="0xCD57F65c2B0e5881CFC2E609F7CD53b746E1F234" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+            <div class="addr-row">
+              <span class="lbl">Factory</span>
+              <span class="val">0xF7B126C6B0DA6ce679Ef4a03355aAC500289e338</span>
+              <button class="copy-btn" data-copy="0xF7B126C6B0DA6ce679Ef4a03355aAC500289e338" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+            <div class="addr-row">
+              <span class="lbl">Router</span>
+              <span class="val">0x3f910Aa503d93c1d0D28DDE3a9539e6e24dffA68</span>
+              <button class="copy-btn" data-copy="0x3f910Aa503d93c1d0D28DDE3a9539e6e24dffA68" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+            <div class="addr-row">
+              <span class="lbl">tUSD</span>
+              <span class="val">0xD64Dd465f3B88f88d1cFA66af7ad4A6d40257EA9</span>
+              <button class="copy-btn" data-copy="0xD64Dd465f3B88f88d1cFA66af7ad4A6d40257EA9" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+            <div class="addr-row">
+              <span class="lbl">Multicall3</span>
+              <span class="val">0xcA11bde05977b3631167028862bE2a173976CA11</span>
+              <button class="copy-btn" data-copy="0xcA11bde05977b3631167028862bE2a173976CA11" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button>
+            </div>
+          </div>
+
+          <div class="net-head">
+            <h3>Elysium Mainnet</h3>
+            <span class="badge planned">Coming</span>
+            <span class="badge testnet">Chain ID 99901</span>
+          </div>
+          <p>Mainnet details will be filled in from the official Kinetiq documentation at launch — nothing below is final until then, and no mainnet address should be trusted from anywhere else.</p>
+          <dl class="kv">
+            <dt>Chain ID</dt><dd><strong>99901</strong></dd>
+            <dt>RPC URL</dt><dd class="tbd">Published at launch — to be filled from official Kinetiq docs</dd>
+            <dt>Explorer</dt><dd class="tbd">Published at launch — to be filled from official Kinetiq docs</dd>
+            <dt>WHYPE</dt><dd class="tbd">Published at launch — to be filled from official Kinetiq docs</dd>
+            <dt>Ladder Factory</dt><dd class="tbd">Published at launch — to be filled from official Kinetiq docs</dd>
+            <dt>Ladder Router</dt><dd class="tbd">Published at launch — to be filled from official Kinetiq docs</dd>
+          </dl>
+          <div class="callout note">
+            <span class="ttl">What changes at mainnet — and what doesn't</span>
+            <p>The guides in these docs (connecting, swapping, adding liquidity, reading markets) are identical on mainnet. The mainnet update replaces <strong>only</strong> this section and the status labels across Earn: new chain, new Ladder contracts deployed fresh on mainnet — testnet contracts and positions do not carry over.</p>
+          </div>
+        </section>
+
+        <!-- ============ 11. FAQ & RISKS ============ -->
+        <section id="faq">
+          <h2>FAQ &amp; Risks</h2>
+
+          <details class="faq">
+            <summary>Are testnet tokens worth anything?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>No. Testnet HYPE, tUSD and every pool token on chain 99801 are valueless test assets. Anyone offering to sell you testnet assets, or promising they will convert to mainnet value, is running a scam.</p></div>
+          </details>
+
+          <details class="faq">
+            <summary>Will my testnet positions carry over to mainnet?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>No. Mainnet is a separate chain with freshly deployed contracts. Testnet LP positions, balances and approvals stay on testnet. At mainnet launch, only the <a href="#contracts">Networks &amp; Contracts</a> section of these docs and the status labels change — the guides stay the same.</p></div>
+          </details>
+
+          <details class="faq">
+            <summary>Why does a pool show "—" for APR?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>APR is only published after at least one hour of fee-growth snapshots exist for that pool. New or quiet pools show a dash until there's real history to annualise — Earn doesn't extrapolate a few minutes of activity into an APR.</p></div>
+          </details>
+
+          <details class="faq">
+            <summary>Why did my swap show "No route"?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>No venue could quote the pair: there is no direct pool and no workable hop through HYPE or tUSD, or every route's quote reverted. It usually means the pool doesn't exist yet or has no liquidity. See <a href="#swap">Swap</a> for how quoting decides this.</p></div>
+          </details>
+
+          <details class="faq">
+            <summary>Where is the claim button for my LP fees?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>There isn't one, by design. On Ladder's V2 pools the 0.3% swap fee stays inside the pool reserves, so your LP tokens grow in redeemable value. You collect fees by withdrawing liquidity — see <a href="#pools">Pools &amp; Liquidity</a>.</p></div>
+          </details>
+
+          <details class="faq">
+            <summary>When does Vote / veLDR launch?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="body"><p>Vote is planned for mainnet. There is no locking or voting on testnet, and no date is promised in these docs — announcements will come from <a href="https://x.com/ladderswap" target="_blank" rel="noopener">@ladderswap</a> when it's ready. The parameters in the <a href="#vote">Vote section</a> describe the planned ve(3,3) design.</p></div>
+          </details>
+
+          <h3 style="margin-top:34px">Risks</h3>
+          <div class="callout danger">
+            <span class="ttl">Read before you deposit anything, anywhere</span>
+            <p><strong>Unaudited contracts.</strong> Ladder's contracts have not been audited. Treat testnet as an experiment, and apply the same caution to any future mainnet deployment until audits are published.</p>
+            <p><strong>Testnet assets have no monetary value</strong> — and nothing on testnet converts to mainnet value.</p>
+            <p><strong>Use a testnet-only wallet.</strong> Keep a separate wallet/account for testnet that never holds real funds, and review every approval your wallet asks you to sign — Earn requests exact-amount approvals, and anything asking for unlimited approval is not Earn.</p>
+            <p><strong>Verify addresses here.</strong> Only trust contract addresses published in the <a href="#contracts">Networks &amp; Contracts</a> section of these docs and the official <a href="https://x.com/ladderswap" target="_blank" rel="noopener">@ladderswap</a> account.</p>
+          </div>
+        </section>
+
+        <footer class="foot">
+          <span>Ladder Earn — documentation</span>
+          <a href="https://earn.ladderswap.trade" target="_blank" rel="noopener">earn.ladderswap.trade</a>
+          <a href="https://ladderswap.trade" target="_blank" rel="noopener">ladderswap.trade</a>
+          <a href="https://x.com/ladderswap" target="_blank" rel="noopener">X — @ladderswap</a>
+        </footer>
+
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // Mobile menu toggle
+        var btn = document.getElementById('menuBtn');
+        var sidebar = document.getElementById('sidebar');
+        btn.addEventListener('click', function () {
+          var open = sidebar.classList.toggle('open');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        sidebar.addEventListener('click', function (e) {
+          if (e.target.closest('a') && window.innerWidth <= 900) {
+            sidebar.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+          }
+        });
+
+        // Scrollspy
+        var links = {};
+        document.querySelectorAll('[data-nav]').forEach(function (a) {
+          links[a.getAttribute('data-nav')] = a;
+        });
+        var current = null;
+        function setActive(id) {
+          if (current === id) return;
+          if (current && links[current]) links[current].classList.remove('active');
+          current = id;
+          if (links[id]) links[id].classList.add('active');
+        }
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) setActive(entry.target.id);
+          });
+        }, { rootMargin: '-12% 0px -70% 0px', threshold: 0 });
+        document.querySelectorAll('main section[id]').forEach(function (s) {
+          observer.observe(s);
+        });
+
+        // Copy buttons
+        document.querySelectorAll('.copy-btn').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var text = b.getAttribute('data-copy');
+            var done = function () {
+              var original = b.innerHTML;
+              b.classList.add('done');
+              b.innerHTML = 'Copied';
+              setTimeout(function () {
+                b.classList.remove('done');
+                b.innerHTML = original;
+              }, 1600);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+            } else { fallback(); }
+            function fallback() {
+              var ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              try { document.execCommand('copy'); done(); } catch (e) {}
+              document.body.removeChild(ta);
+            }
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
