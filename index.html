@@ -1113,7 +1113,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <p>The token you pay with sets the route — balances are read live for your wallet.</p>
     <div class="searchbox" style="width:100%;margin-bottom:12px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="swapPickerSearch" type="text" placeholder="Search by symbol or name" oninput="renderSwapPickerList()" />
+      <input id="swapPickerSearch" type="text" placeholder="Search by symbol, name, or contract address" oninput="renderSwapPickerList()" />
     </div>
     <div id="swapPickerList"></div>
     <button class="wclose" onclick="closeSwapPicker()">Cancel</button>
@@ -1868,8 +1868,8 @@ function poolMatches(p){
   }
   if(inW && !(p.lpBal !== null && p.lpBal !== undefined && p.lpBal > 0n)) return false;
   if(q){
-    var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair).toLowerCase();
-    if(hay.indexOf(q) === -1) return false;
+    var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair + " " + (p.token0 || "") + " " + (p.token1 || "")).toLowerCase();
+    if(hay.indexOf(q) === -1 && hay.replace(/0x/g, "").indexOf(q.replace(/^0x/, "")) === -1) return false;
   }
   return true;
 }
@@ -2696,8 +2696,8 @@ function renderVote(){
   var newest = okPools.length ? okPools[okPools.length - 1] : null;
   var list = okPools.filter(function(p){
     if(!q) return true;
-    var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair).toLowerCase();
-    return hay.indexOf(q) > -1;
+    var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair + " " + (p.token0 || "") + " " + (p.token1 || "")).toLowerCase();
+    return hay.indexOf(q) > -1 || hay.replace(/0x/g, "").indexOf(q.replace(/^0x/, "")) > -1;
   });
   if(!list.length){
     box.innerHTML = '<div class="emptybox"><div class="et">' + (okPools.length ? 'No markets match that filter' : 'Pools unavailable') + '</div>' + (okPools.length ? 'Try a different search.' : 'Reload to retry reading the pool list.') + '</div>';
@@ -2834,8 +2834,8 @@ function renderAnTable(){
     }
     if(type !== "ALL" && poolCategory(p) !== type) return false;
     if(q){
-      var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair).toLowerCase();
-      if(hay.indexOf(q) === -1) return false;
+      var hay = (dispSym(p,0) + " " + dispSym(p,1) + " " + dispName(p,0) + " " + dispName(p,1) + " " + p.pair + " " + (p.token0 || "") + " " + (p.token1 || "")).toLowerCase();
+      if(hay.indexOf(q) === -1 && hay.replace(/0x/g, "").indexOf(q.replace(/^0x/, "")) === -1) return false;
     }
     return true;
   });
@@ -3642,10 +3642,26 @@ $("swapPicker").addEventListener("click", function(e){ if(e.target === this) clo
 function renderSwapPickerList(){
   var box = $("swapPickerList"); if(!box) return;
   var q = ($("swapPickerSearch") ? $("swapPickerSearch").value : "").trim().toLowerCase();
+  var qNorm = q.replace(/^0x/, "");
   var cur = swapPickerSide === "in" ? swapInTok : swapOutTok;
   var list = swapTokensAll().filter(function(t){
     if(!q) return true;
-    return t.sym.toLowerCase().indexOf(q) > -1 || t.name.toLowerCase().indexOf(q) > -1;
+    if(t.sym.toLowerCase().indexOf(q) > -1 || t.name.toLowerCase().indexOf(q) > -1) return true;
+    /* Contract-address search: pasting a CA (checksummed, lower-case, or
+       without the 0x prefix, full or partial) must find the token. Keyed
+       strictly on the token's own address / effective address — for the
+       pinned $LADDER that is exactly LADDER_TOKEN_V4, so same-name
+       impersonators can never surface via an address lookup for his CA. */
+    var addrs = [];
+    if(t.addr) addrs.push(t.addr.toLowerCase());
+    var eff = swapKey(t); if(eff) addrs.push(eff);
+    if(t.addr === null) addrs.push(NATIVE_ADDR.toLowerCase());
+    for(var ai = 0; ai < addrs.length; ai++){
+      var a = addrs[ai];
+      if(a.indexOf(q) > -1) return true;
+      if(qNorm && a.replace(/^0x/, "").indexOf(qNorm) > -1) return true;
+    }
+    return false;
   });
   if(!list.length){
     box.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:14px 4px">No token matches that search.</div>';
