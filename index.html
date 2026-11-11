@@ -644,6 +644,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     </div>
 
     <div id="dexSources" style="font-size:12.5px;color:var(--muted);margin:-2px 0 8px;line-height:1.65">Pool sources: the external Uniswap V2 factories from the Elysium mainnet census (9 Nov 2026, snapshot block 3,151,602). Pairs touching HYPE or USDC are pulled in live from every factory.</div>
+    <div id="v4Sources" style="font-size:12.5px;color:var(--muted);margin:-2px 0 10px;line-height:1.65">Uniswap V4: loading PoolManager pools…</div>
     <div style="font-size:12.5px;color:var(--muted2);margin:-2px 0 10px;line-height:1.65">Volume &amp; fees: last 2,000 blocks · TVL at spot · APR from your tracked fee growth (needs 1h+ of visits)<br/>All figures in HYPE, valued from live reserves at each pool's spot (HYPE = 1). Fees = 0.3% of volume. Pool APR = daily swap fees ÷ TVL × 365 — a simple rate, before deductions, not a forecast.</div>
     <div class="tablebox">
       <div class="thead">
@@ -718,13 +719,13 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <div class="swaplayout">
       <div class="swapexpl">
         <h1>Swap</h1>
-        <p class="lead">Trade tokens right here in Earn — aggregator-first on Elysium mainnet. Quotes are read live from the same venue registry the Aggregator compares: every external DEX whose router Earn has verified on-chain answers here (factory / WETH / live-quote checks all passed). Ladder's own venue joins the registry when its contracts are deployed. Tokens pooled only on factories without a verified router are labelled view-only in the picker, and the panel says exactly why when no route exists.</p>
+        <p class="lead">Trade tokens right here in Earn — aggregator-first on Elysium mainnet. Quotes are read live from the same venue registry the Aggregator compares: every external DEX whose router Earn has verified on-chain answers here (factory / WETH / live-quote checks all passed). Ladder's own venue joins the registry when its contracts are deployed. Tokens pooled only on factories without a verified router are labelled view-only in the picker, and the panel says exactly why when no route exists. Uniswap V4 pools (PoolManager) quote through the V4 Quoter and execute through the Universal Router — including Hasan's Montra-launched $LADDER pool.</p>
         <div class="swapstats">
           <div class="swapstat"><span>Pools available ⓘ</span><b id="swapStatPools">—</b></div>
           <div class="swapstat"><span>Routes quoted ⓘ</span><b id="swapStatRoutes">—</b></div>
           <div class="swapstat"><span>Mainnet block ⓘ</span><b id="swapStatBlock">—</b></div>
         </div>
-        <p class="swapnote">The quote you see is the router's own <b>getAmountsOut</b> answer for the best live path — direct, or one hop through HYPE. Execution runs through the winning venue's router with a <b><span id="swapExplSlip">0.5</span>% slippage tolerance</b> and a <b>20 minute deadline</b>; nothing moves until you confirm in your wallet.</p>
+        <p class="swapnote">The quote you see is the winning venue's own answer for the best live path — a V2 router's <b>getAmountsOut</b>, or the <b>V4 Quoter</b> for PoolManager pools — direct, or one hop through HYPE. Execution runs through the winning venue's router with a <b><span id="swapExplSlip">0.5</span>% slippage tolerance</b> and a <b>20 minute deadline</b>; nothing moves until you confirm in your wallet. Two-hop V4 routes are quoted live but quote-only for now — single-pool V4 swaps execute through the Universal Router after an on-chain pre-flight check.</p>
       </div>
       <div>
         <div class="swapconv">
@@ -1004,7 +1005,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
 
     <div class="roadmap-banner">
       <div class="rb-t">The routing layer is live on mainnet — verified routers quote side by side</div>
-      <p>Routing never moves another DEX's liquidity; it sends the trade to wherever the pool already is. Every venue sits behind one adapter interface and the quotes below are live on-chain reads. Earn is aggregator-first on mainnet: Ladder's own contracts are not deployed yet, so four verified external venues answer — DEX 0x7272…1422 (the main venue, 22 WHYPE pairs including the graduated launchpad tokens), DEX 0xc48c…8715, DEX 0xbbbc…5df2 and DEX 0x8cec…48df — each verified on-chain (factory() and WETH() bindings exact against the canonical mainnet WHYPE, quote math matched to the wei, swap simulation passed), each executing through its own router. Seven more factories are tracked view-only: the deepest pool on the chain (DONTBUY/WHYPE) sits on a venue whose only swap contract is nonstandard, and the rest exposed no verifiable standard router. Honest depth warning: total V2 liquidity on mainnet is still thin (~100 HYPE across all factories at the 9 Nov census) and most of the chain's liquidity sits in Uniswap V4 and launchpad curves, outside this V2 adapter — expect price-impact warnings on larger trades.</p>
+      <p>Routing never moves another DEX's liquidity; it sends the trade to wherever the pool already is. Every venue sits behind one adapter interface and the quotes below are live on-chain reads. Earn is aggregator-first on mainnet: Ladder's own contracts are not deployed yet, so four verified external venues answer — DEX 0x7272…1422 (the main venue, 22 WHYPE pairs including the graduated launchpad tokens), DEX 0xc48c…8715, DEX 0xbbbc…5df2 and DEX 0x8cec…48df — each verified on-chain (factory() and WETH() bindings exact against the canonical mainnet WHYPE, quote math matched to the wei, swap simulation passed), each executing through its own router. Seven more factories are tracked view-only: the deepest pool on the chain (DONTBUY/WHYPE) sits on a venue whose only swap contract is nonstandard, and the rest exposed no verifiable standard router. Honest depth warning: total V2 liquidity on mainnet is still thin (~100 HYPE across all factories at the 9 Nov census) — the Uniswap V4 adapter below now covers the PoolManager pools where most of the chain's liquidity sits, including the Montra launchpad pools — expect price-impact warnings on larger trades.</p>
     </div>
 
     <h2 style="font-size:23px;margin:26px 0 14px">Compare routes</h2>
@@ -1046,7 +1047,7 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
     <h2 style="font-size:23px;margin:30px 0 14px">How the framework works</h2>
     <div class="explgrid">
       <div class="expl"><div class="expl-t">1 · Registry</div><p>Every venue is one config entry: name, protocol kind, router and factory addresses, and which adapter speaks to it. Adding a DEX — or Ladder itself, once deployed — means adding an entry; nothing else in the app changes.</p></div>
-      <div class="expl"><div class="expl-t">2 · Adapters</div><p>Each protocol family gets one adapter behind a single interface — <span style="font-family:ui-monospace,Menlo,monospace">quote(amountIn, path)</span> and <span style="font-family:ui-monospace,Menlo,monospace">buildSwap(quote)</span>. The V2 adapter is live below; V3 and external-fork adapters slot into the same shape.</p></div>
+      <div class="expl"><div class="expl-t">2 · Adapters</div><p>Each protocol family gets one adapter behind a single interface — <span style="font-family:ui-monospace,Menlo,monospace">quote(amountIn, path)</span> and <span style="font-family:ui-monospace,Menlo,monospace">buildSwap(quote)</span>. The V2 adapter is live below, and the V4 adapter (Quoter for pricing, Universal Router for execution) sits in the same shape beside it.</p></div>
       <div class="expl"><div class="expl-t">3 · Compare</div><p>All live adapters answer the same request in one batch — direct pairs and multi-hop paths through HYPE. The winner is the highest net output after that venue's own swap fees, not the best headline price.</p></div>
       <div class="expl"><div class="expl-t">4 · Execute &amp; fall back</div><p>The winning quote becomes a swap through that venue's own router in the Swap tab, guarded by the user's slippage tolerance. If a venue's router stalls or reverts, the comparison falls back to the next-best quote.</p></div>
     </div>
@@ -1138,6 +1139,23 @@ var ROUTER  = null;
 var WHYPE   = "0xbA876237B0F021A6c6D852d6c26E107997cC5E81";
 var USDC    = "0xb47c4C8F73F009CC0C0d3f92B388d13E293F0B65";
 var MULTICALL = "0xcA11bde05977b3631167028862bE2a173976CA11"; /* verified present on chain 99901 */
+var V4_PM = "0xE2e105d3F7209A9DA11f83cCf3E7398a753823F1"; /* Uniswap V4 PoolManager — verified on-chain, census 2026-11-11 */
+var V4_QUOTER = "0x379F556c5a748BD7Cc9baF0F7A344094Ac1814f5"; /* V4 Quoter — quoteExactInputSingle verified live */
+var V4_STATEVIEW = "0x27eD73aE0652fdCf71d6793412A7525f32bE9dfE"; /* StateView — getSlot0 / getLiquidity verified */
+var V4_UR = "0x1B341FDD55d56F8E08409A2C25DDFad93Eb03C1a"; /* Universal Router — production V4 execution */
+var PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; /* canonical Permit2 */
+var NATIVE_ADDR = "0x0000000000000000000000000000000000000000"; /* V4 native currency sentinel */
+var V4_DYNAMIC_FEE = 8388608; /* 0x800000 DYNAMIC_FEE_FLAG — the hook sets the effective fee */
+var LADDER_TOKEN_V4 = "0x8d99fe0b16ebec93495ad93c824337e46ff9bc84"; /* Hasan's Montra $LADDER token #2 — key STRICTLY on this CA; same-name impersonators exist */
+var V4_PINNED_POOLS = [
+  { poolId: "0xc87342ac015ffbdc5827fab8f9ddabb323060ebbbf0e5ff1bff4ad8d120b3216", currency0: NATIVE_ADDR, currency1: LADDER_TOKEN_V4, fee: 8388608, tickSpacing: 200, hooks: "0x6b1216a40b65c83e9c9e18a562c446697b8cf8ec", pinned: true },
+  { poolId: "0xb3032695ffb0a66e6342876dd2386835471466cb2bb70f341947d98a69e265cc", currency0: NATIVE_ADDR, currency1: USDC, fee: 3000, tickSpacing: 60, hooks: NATIVE_ADDR, pinned: true }
+];
+var V4_QUOTE_SEL = "0xaa9d21cb"; /* quoteExactInputSingle(QuoteExactSingleParams) — single-struct form; verified live (the flattened tuple form reverts on this deployment) */
+var V4_GETSLOT0_SEL = "0xc815641c", V4_GETLIQ_SEL = "0xfa6793d5";
+var V4_INIT_TOPIC = "0xdd466e674ea557f56295e2d0218a125ea4b4f0f6f3307b95f85e6110838d6438";
+var UR_EXECUTE_SEL = "0x3593564c"; /* Universal Router execute(bytes,bytes[],uint256) */
+var PERMIT2_ALLOWANCE_SEL = "0x927da105", PERMIT2_APPROVE_SEL = "0x87517c45";
 
 /* ================= Pool sources: the V2 DEX factories on Elysium MAINNET =================
    Mainnet census 2026-11-09 (snapshot block 3,151,602): a full-history
@@ -1516,7 +1534,7 @@ function renderDexFilter(){
   pools.forEach(function(p){ if(p.dex) counts[p.dex] = (counts[p.dex] || 0) + 1; });
   sel.innerHTML = '<option value="ALL">All DEXs</option>' + DEX_SOURCES.map(function(s){
     return '<option value="' + s.id + '">' + esc(s.name) + (counts[s.id] ? " (" + counts[s.id] + ")" : "") + '</option>';
-  }).join("");
+  }).join("") + '<option value="v4">Uniswap V4' + (v4Pools.length ? " (" + v4Pools.length + ")" : "") + '</option>';
   var ok = false;
   for(var i = 0; i < sel.options.length; i++) if(sel.options[i].value === cur) ok = true;
   sel.value = ok ? cur : "ALL";
@@ -1662,6 +1680,16 @@ function pooledTotals(){
     [[p.token0,p.r0],[p.token1,p.r1]].forEach(function(pr){
       if(isHype(pr[0])) hype += pr[1];
       if(pr[0].toLowerCase() === USDC.toLowerCase()) usdc += pr[1];
+    });
+  });
+  /* V4 pools contribute their in-range virtual amounts of the anchor
+     currencies (native HYPE counts as HYPE, like WHYPE does for V2). */
+  v4Pools.forEach(function(p){
+    var va = v4VirtualAmounts(p);
+    [[p.currency0, va.h0], [p.currency1, va.h1]].forEach(function(pr){
+      var a = pr[0].toLowerCase();
+      if(a === NATIVE_ADDR || isHype(pr[0])) hype += BigInt(Math.round(pr[1] * 1e18));
+      if(a === USDC.toLowerCase()) usdc += BigInt(Math.round(pr[1] * 1e6));
     });
   });
   return { hype:hype, usdc:usdc };
@@ -1812,7 +1840,7 @@ function poolApr(p){
 /* ================= Markets rendering ================= */
 function renderStats(){
   var ok = pools.filter(function(p){ return !p.err; });
-  $("statPools").textContent = pools.length ? String(ok.length) : "—";
+  $("statPools").textContent = (pools.length || v4Pools.length) ? String(ok.length + v4Pools.length) : "—";
   var t = pooledTotals();
   $("tdTotals").innerHTML =
     '<div>' + fmtUnits(t.hype, 18) + ' <span class="unit">HYPE pooled</span></div>' +
@@ -1847,17 +1875,21 @@ function poolMatches(p){
 }
 function renderMarkets(){
   var box = $("poolRows");
-  if(!pools.length) return;
-  var list = pools.filter(poolMatches);
-  list.sort(function(a,b){
-    var d = reserveValueHype(b) - reserveValueHype(a);
+  if(!pools.length && !v4Pools.length) return;
+  var items = [];
+  pools.filter(poolMatches).forEach(function(p){ items.push({ v4: false, p: p, tvl: reserveValueHype(p) }); });
+  v4Pools.filter(v4Matches).forEach(function(p){ items.push({ v4: true, p: p, tvl: v4PoolValueHype(p) }); });
+  items.sort(function(a, b){
+    var d = b.tvl - a.tvl;
     return sortDesc ? d : -d;
   });
-  if(!list.length){
+  if(!items.length){
     box.innerHTML = '<div class="emptybox"><div class="et">No pools match those filters</div>Try clearing the search or turning off In Wallet.</div>';
     return;
   }
-  box.innerHTML = list.map(function(p){
+  box.innerHTML = items.map(function(item){
+    var p = item.p;
+    if(item.v4) return v4RowHtml(p);
     var idx = pools.indexOf(p);
     if(p.err){
       return '<div class="trow"><div class="poolcell"><div><div class="poolname">Pool</div><div class="rowerr">' + esc(p.err) + '</div><div class="addr">' + esc(p.pair) + '</div></div></div>' +
@@ -2509,7 +2541,7 @@ function priceOf(addr){
   if(!addr) return null;
   var a = addr.toLowerCase();
   if(isHype(addr)) return 1;
-  if(a === USDC.toLowerCase()) return usdcPriceHype();
+  if(a === USDC.toLowerCase()){ var u2 = usdcPriceHype(); if(u2) return u2; return (typeof v4PriceOf === "function") ? v4PriceOf(addr) : null; /* V4 native/USDC ref pool backs the rate when the V2 dust pair cannot */ }
   var res = null;
   pools.forEach(function(p){
     if(p.err || res !== null) return;
@@ -2523,6 +2555,7 @@ function priceOf(addr){
     if(isHype(oa)) res = ro / ri;
     else if(oa.toLowerCase() === USDC.toLowerCase()){ var up = usdcPriceHype(); if(up) res = (ro / ri) * up; }
   });
+  if(res === null && typeof v4PriceOf === "function") res = v4PriceOf(addr); /* V4 spot (StateView) fallback */
   return res;
 }
 function reserveValueHype(p){
@@ -2537,6 +2570,7 @@ function reserveValueHype(p){
 function totalDepositsHype(){
   var v = 0;
   pools.forEach(function(p){ v += reserveValueHype(p); });
+  v4Pools.forEach(function(p){ v += v4PoolValueHype(p); });
   return v;
 }
 function portfolioValueHype(){
@@ -3123,6 +3157,18 @@ function swapTokensAll(){
       else push({ addr:a, sym: dispSym(p, idx), name: dispName(p, idx), dec: idx === 0 ? p.dec0 : p.dec1 });
     });
   });
+  /* $LADDER (Montra, V4) is pinned FIRST among V4 tokens, keyed strictly
+     on its contract address — same-name impersonator tokens exist on
+     this chain and must never win a symbol lookup over the pinned CA. */
+  var ldrMeta = tokenMetaCache[LADDER_TOKEN_V4];
+  push({ addr: LADDER_TOKEN_V4, sym: "LADDER", name: ldrMeta ? ldrMeta.name : "ladder swap", dec: ldrMeta ? ldrMeta.decimals : 18, fromV4: true, v4Pinned: true });
+  v4Pools.forEach(function(vp){
+    [0,1].forEach(function(idx){
+      var c = idx === 0 ? vp.currency0 : vp.currency1;
+      if(c.toLowerCase() === NATIVE_ADDR || isHype(c)) push({ addr: null, sym: "HYPE", name: "Hyperliquid (native)", dec: 18 });
+      else push({ addr: c, sym: idx === 0 ? vp.sym0 : vp.sym1, name: idx === 0 ? vp.name0 : vp.name1, dec: idx === 0 ? vp.dec0 : vp.dec1, fromV4: true });
+    });
+  });
   return out;
 }
 function swapTokByEff(eff){
@@ -3300,6 +3346,9 @@ function tokenDexIds(t){
     if(p.err || !p.token0) return;
     if(p.token0.toLowerCase() === eff || p.token1.toLowerCase() === eff) map[p.dex] = true;
   });
+  v4Pools.forEach(function(vp){
+    if(v4CurrencyIs(vp.currency0, eff) || v4CurrencyIs(vp.currency1, eff)) map["uniswap-v4"] = true;
+  });
   return Object.keys(map);
 }
 /* The honest no-route explanation, built from the loaded pools: which
@@ -3315,6 +3364,10 @@ function swapNoRouteHtml(effIn, effOut){
   });
   function names(map){ return Object.keys(map).map(function(id){ return dexSrc(id).name; }).join(", "); }
   function anyRouted(map){ return Object.keys(map).some(function(id){ return !!dexSrc(id).router; }); }
+  var v4Out = v4Pools.some(function(vp){ return v4CurrencyIs(vp.currency0, effOut) || v4CurrencyIs(vp.currency1, effOut); });
+  var v4In = v4Pools.some(function(vp){ return v4CurrencyIs(vp.currency0, effIn) || v4CurrencyIs(vp.currency1, effIn); });
+  if(v4Out || v4In)
+    return "<b>No route for this pair yet.</b> One of these tokens trades on Uniswap V4, but no direct V4 pool — and no two-hop V4 path through native HYPE — connects this pair, and no verified V2 venue routes it either. Single-pool V4 pairs (like HYPE / LADDER) trade normally.";
   if(Object.keys(outDex).length && !anyRouted(outDex))
     return "<b>No route for this pair yet.</b> " + esc(swapOutTok.sym) + " is pooled on " + esc(names(outDex)) +
       ", and Earn has not been able to verify that DEX's router on-chain — its pools stay view-only, so no venue here can quote or execute this swap. Tokens pooled on a verified venue (Ladder, or a DEX marked “router verified” in the picker) trade normally.";
@@ -3329,7 +3382,7 @@ async function refreshSwapQuote(){
   var seq = ++swapQuoteSeq;
   swapSyncHeads();
   var outEl = $("swapAmtOut"), rateEl = $("swapRate");
-  if(!pools.length){
+  if(!pools.length && !v4Pools.length){
     swapQuote = null;
     if(outEl){ outEl.textContent = "—"; outEl.classList.add("dim"); }
     if(rateEl) rateEl.textContent = "Loading pools…";
@@ -3343,7 +3396,7 @@ async function refreshSwapQuote(){
     swapQuote = null;
     if(outEl){ outEl.textContent = "0.0"; outEl.classList.add("dim"); }
     if(rateEl) rateEl.textContent = swapInTok
-      ? "Select a token to receive — the picker marks which tokens have a live route. USDC has no usable route yet: its only mainnet pair is a dust WHYPE/USDC pool."
+      ? "Select a token to receive — the picker marks which tokens have a live route, on V2 venues and on Uniswap V4."
       : "Select the token you pay with to get a live quote.";
     swapClearEstimates(); swapClearDetails(); swapUpdateButton();
     return;
@@ -3380,13 +3433,23 @@ async function refreshSwapQuote(){
      deterministically, so those jobs are never even sent. */
   var jobs = [], calls = [];
   venues.forEach(function(src){
+    if(src.adapter === "v4") return; /* V4 jobs are built from PoolKeys below, not V2 paths */
     paths.forEach(function(pth){
       if(!venueHasPath(src, pth)) return;
       jobs.push({ src: src, path: pth });
       calls.push({ to: src.router, data: encAmountsOut(amtIn, pth) });
     });
   });
-  if(!jobs.length){
+  /* Uniswap V4: a direct PoolManager pool for this pair quotes through
+     the V4 Quoter in the same batch. HYPE maps to the pool's native or
+     WHYPE currency — never force-wrapped either way. */
+  var v4Direct = v4FindDirectPool(effIn, effOut);
+  if(v4Direct){
+    jobs.push({ kind: "v4", pool: v4Direct.pool, zeroForOne: v4Direct.zeroForOne });
+    calls.push({ to: V4_QUOTER, data: encV4Quote(v4Direct.pool, v4Direct.zeroForOne, amtIn) });
+  }
+  var v4Legs = v4Direct ? null : v4FindLegPools(effIn, effOut);
+  if(!jobs.length && !v4Legs){
     /* Known pools cannot route this pair on any verified venue — that
        is a final answer, not an error, and it resolves immediately. */
     swapQuote = null;
@@ -3395,16 +3458,31 @@ async function refreshSwapQuote(){
     swapClearDetails(); swapUpdateButton();
     return;
   }
-  var res = await quoteBatch(calls);
+  var res = calls.length ? await quoteBatch(calls) : [];
   if(seq !== swapQuoteSeq) return;
   if(swapQuoteStaleKey() !== swapKey(swapInTok) + "|" + swapKey(swapOutTok) + "|" + $("swapAmtIn").value) return;
   var best = null;
   jobs.forEach(function(j, i){
     var outAmt = null;
-    try { outAmt = res[i] ? decAmountsOut(res[i]) : null; } catch(e){ outAmt = null; }
-    if(outAmt !== null && outAmt > 0n && (!best || outAmt > best.amountOut))
-      best = { src: j.src, path: j.path, amountOut: outAmt };
+    if(j.kind === "v4"){
+      try { outAmt = res[i] && res[i] !== "0x" ? decUint(res[i], 0) : null; } catch(e){ outAmt = null; }
+    } else {
+      try { outAmt = res[i] ? decAmountsOut(res[i]) : null; } catch(e){ outAmt = null; }
+    }
+    if(outAmt !== null && outAmt > 0n && (!best || outAmt > best.amountOut)){
+      if(j.kind === "v4") best = { kind: "v4", src: V4_VENUE, pool: j.pool, zeroForOne: j.zeroForOne, path: [effIn, effOut], amountOut: outAmt };
+      else best = { kind: "v2", src: j.src, path: j.path, amountOut: outAmt };
+    }
   });
+  if(!best && v4Legs){
+    /* Two-hop V4 through native HYPE — sequential Quoter calls. The
+       quote competes with V2 routes on output; execution of two-hop
+       V4 stays quote-only (see doSwap). */
+    var th = await v4QuoteTwoHop(v4Legs, amtIn);
+    if(seq !== swapQuoteSeq) return;
+    if(th !== null && th > 0n)
+      best = { kind: "v4", src: V4_VENUE, v4Legs: v4Legs, path: [effIn, WHYPE, effOut], amountOut: th };
+  }
   if(!best){
     swapQuote = null;
     if(outEl){ outEl.textContent = "—"; outEl.classList.add("dim"); }
@@ -3419,7 +3497,9 @@ async function refreshSwapQuote(){
     if(expected > 0) impact = (1 - actual / expected) * 100;
   }
   swapQuote = { src: best.src, path: best.path, amountOut: best.amountOut, amtIn: amtIn,
-    effIn: effIn, effOut: effOut, impact: impact };
+    effIn: effIn, effOut: effOut, impact: impact,
+    kind: best.kind || "v2", v4Pool: best.pool || null, zeroForOne: best.zeroForOne, v4Legs: best.v4Legs || null,
+    feeLabel: best.kind === "v4" ? (best.v4Legs ? "Pool fees apply per hop (V4)" : v4FeeLabel(best.pool)) : null };
   swapQuoteAt = Date.now();
   swapApplyDetails();
   swapCheckApproval();
@@ -3443,7 +3523,7 @@ function swapApplyDetails(){
   $("swapRate").innerHTML = "<b>1 " + esc(swapInTok.sym) + " ≈ " + esc(fmtPrice(rate)) + " " + esc(swapOutTok.sym) + "</b> · via " + esc(q.src.name) + " · " + esc(swapPathLabel(q.path));
   $("swapRouteVal").textContent = q.src.name + " · " + swapPathLabel(q.path);
   $("swapMinVal").textContent = fmtUnits(minOut(q.amountOut, swapSlipVal()), swapOutTok.dec, 6) + " " + swapOutTok.sym;
-  $("swapFeeVal").textContent = fmtUnits(q.amtIn * 3n / 1000n, swapInTok.dec, 6) + " " + swapInTok.sym + " (0.3%)";
+  $("swapFeeVal").textContent = q.feeLabel ? q.feeLabel : fmtUnits(q.amtIn * 3n / 1000n, swapInTok.dec, 6) + " " + swapInTok.sym + " (0.3%)";
   var irow = $("swapImpactRow"), iwarn = $("swapImpactWarn");
   if(q.impact === null || q.impact === undefined){
     irow.classList.add("hidden"); iwarn.classList.add("hidden");
@@ -3465,12 +3545,13 @@ function swapUpdateButton(){
   if(!account){ btn.disabled = false; btn.textContent = "Connect wallet to swap"; return; }
   if(!swapOutTok){ btn.disabled = true; btn.textContent = "Select a token to receive"; return; }
   var amtIn = parseUnits($("swapAmtIn").value, swapInTok.dec);
-  if(!pools.length){ btn.disabled = true; btn.textContent = "Loading pools…"; return; }
+  if(!pools.length && !v4Pools.length){ btn.disabled = true; btn.textContent = "Loading pools…"; return; }
   if(amtIn === null || amtIn <= 0n){ btn.disabled = true; btn.textContent = "Enter an amount"; return; }
   if(swapKey(swapInTok) === swapKey(swapOutTok)){ btn.disabled = true; btn.textContent = "Pick two different tokens"; return; }
   if(!swapQuote || swapQuote.amtIn !== amtIn || swapQuote.effIn.toLowerCase() !== swapKey(swapInTok) || swapQuote.effOut.toLowerCase() !== swapKey(swapOutTok)){
     btn.disabled = true; btn.textContent = "Get a quote"; return;
   }
+  if(swapQuote.kind === "v4" && swapQuote.v4Legs){ btn.disabled = true; btn.textContent = "V4 two-hop — quote only"; return; }
   btn.disabled = false; btn.textContent = "Swap";
 }
 
@@ -3532,7 +3613,7 @@ function openSwapForPool(idx){
 function renderSwapPopular(){
   var wrap = $("swapPopularWrap"), box = $("swapPopular");
   if(!wrap || !box) return;
-  var cands = [["HYPE","AGORA"],["HYPE","ES"],["HYPE","USDC"]];
+  var cands = [["HYPE","AGORA"],["HYPE","ES"],["HYPE","USDC"],["HYPE","LADDER"]];
   var html = "";
   cands.forEach(function(c){
     var exists = pools.some(function(p){
@@ -3540,6 +3621,7 @@ function renderSwapPopular(){
       var s0 = dispSym(p, 0).toLowerCase(), s1 = dispSym(p, 1).toLowerCase();
       return (s0 === c[0].toLowerCase() && s1 === c[1].toLowerCase()) || (s0 === c[1].toLowerCase() && s1 === c[0].toLowerCase());
     });
+    if(!exists) exists = v4Pools.some(function(vp){ var a0 = vp.sym0.toLowerCase(), a1 = vp.sym1.toLowerCase(); return (a0 === c[0].toLowerCase() && a1 === c[1].toLowerCase()) || (a0 === c[1].toLowerCase() && a1 === c[0].toLowerCase()); });
     if(exists) html += '<button class="popchip" onclick="setSwapPairBySym(\'' + c[0] + '\',\'' + c[1] + '\')">' + esc(c[0]) + ' / ' + esc(c[1]) + '</button> ';
   });
   if(!html){ wrap.classList.add("hidden"); return; }
@@ -3577,12 +3659,15 @@ function renderSwapPickerList(){
        external DEX says which one carries its swaps. */
     var tag = "";
     var dexIds = tokenDexIds(t);
-    if(swapKey(t) === USDC.toLowerCase()){
-      /* USDC stays listed (canonical mainnet token, and its dust pair
-         exists), but it is flagged honestly: that pair is not a usable
-         market, so picking USDC resolves to the no-route explanation
-         rather than a quote. */
-      tag = '<div class="tn" style="color:var(--amber)">No usable route yet — the only WHYPE/USDC pair on mainnet is dust</div>';
+    if(t.v4Pinned){
+      tag = '<div class="tn">Hasan\'s Montra launch · Uniswap V4 pool · CA ' + esc(shortAddr(t.addr)) + '</div>';
+    } else if(swapKey(t) === USDC.toLowerCase()){
+      if(v4Pools.some(function(vp){ return vp.poolId.toLowerCase() === V4_PINNED_POOLS[1].poolId.toLowerCase() && vp.liquidity > 0n; }))
+        tag = '<div class="tn">Swaps via Uniswap V4 · native/USDC pool</div>';
+      else
+        tag = '<div class="tn" style="color:var(--amber)">No usable V2 route yet — the only WHYPE/USDC V2 pair on mainnet is dust</div>';
+    } else if(dexIds.indexOf("uniswap-v4") > -1){
+      tag = '<div class="tn">Swaps via Uniswap V4' + (t.addr ? ' · CA ' + esc(shortAddr(t.addr)) : '') + '</div>';
     } else if(dexIds.length){
       var routed = dexIds.filter(function(id){ return !!dexSrc(id).router; });
       if(!routed.length)
@@ -3620,6 +3705,7 @@ async function swapCheckApproval(){
   wrap.innerHTML = "";
   if(!account || !swapQuote || !swapInTok || swapInTok.addr === null) return;
   var q = swapQuote;
+  if(q.kind === "v4"){ v4RenderApprovals(wrap, q); return; }
   try {
     var hex = await ethCall(swapInTok.addr, encCall(SEL.allowance, [{ t:"address", v: account }, { t:"address", v: q.src.router }]));
     if(decUint(hex, 0) < q.amtIn && $("swapApproveWrap")){
@@ -3658,6 +3744,11 @@ async function doSwap(){
     amtIn = swapQuote.amtIn;
   }
   var q = swapQuote;
+  if(q.kind === "v4"){
+    if(q.v4Legs){ setStatus("swapStatus", "This is a two-hop V4 route — it is quoted live, but Earn only executes single-pool V4 swaps for now. Nothing was sent.", "info"); return; }
+    await doSwapV4(q, amtIn);
+    return;
+  }
   var slip = swapSlipVal();
   var amtOutMin = minOut(q.amountOut, slip);
   var deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
@@ -3750,6 +3841,13 @@ DEX_SOURCES.slice(1).forEach(function(d){
   }
 });
 
+/* Uniswap V4 joins the registry as a live venue: PoolManager pools,
+   quoted by the V4 Quoter and executed through the Universal Router
+   (single-pool routes; two-hop V4 routes are quote-only for now). */
+AGG_SOURCES.push({ id: "uniswap-v4", name: "Uniswap V4", kind: "Uniswap V4 · PoolManager", adapter: "v4",
+  router: V4_UR, poolManager: V4_PM, factory: null, status: "live",
+  note: "PoolManager 0xE2e105d3F7209A9DA11f83cCf3E7398a753823F1 — quotes via the V4 Quoter (0x379F…A4f5), pool state via StateView, execution via the Universal Router (0x1B34…3C1a) with Permit2 settlement for token inputs. Verified on-chain in the 2026-11-11 census, including both swap directions of the pinned $LADDER pool. Most PoolManager pools carry dynamic (hook-set) fees — the Quoter prices them in; Earn never assumes a fee." });
+
 /* --- ABI helpers for getAmountsOut(uint256, address[]) -> uint256[] --- */
 function encAmountsOut(amountIn, path){
   var d = SEL.getAmountsOut + wordUint(amountIn) + wordUint(64n) + wordUint(BigInt(path.length));
@@ -3776,6 +3874,12 @@ var AGG_ADAPTERS = {
       /* swapExactTokensForTokens calldata for this venue's router. */
       return { venue: src.id, to: src.router, note: "execution via venue router" };
     }
+  },
+  /* Uniswap V4 — quoting lives in v4QuoteForPair (PoolKey-based, not
+     path-based); runAggCompare and the Swap view call it directly. */
+  v4: {
+    quote: async function(src, amountIn, path){ return null; },
+    buildSwap: function(src, quote, opts){ return null; }
   },
   /* Uniswap V3 (QuoterV2) — interface reserved; quoter address pending. */
   v3: {
@@ -3808,6 +3912,16 @@ function aggTokens(){
       out.push({ addr:a, sym: dispSym(p, idx), dec: idx === 0 ? p.dec0 : p.dec1 });
     });
   });
+  /* V4 currencies join the token list (native HYPE is the WHYPE entry
+     above; the pinned $LADDER is keyed strictly on its CA). */
+  v4Pools.forEach(function(vp){
+    [0,1].forEach(function(idx){
+      var a = idx === 0 ? vp.currency0 : vp.currency1, k = a.toLowerCase();
+      if(k === NATIVE_ADDR || seen[k]) return; seen[k] = true;
+      out.push({ addr: a, sym: idx === 0 ? vp.sym0 : vp.sym1, dec: idx === 0 ? vp.dec0 : vp.dec1 });
+    });
+  });
+  if(!seen[LADDER_TOKEN_V4]){ seen[LADDER_TOKEN_V4] = true; out.push({ addr: LADDER_TOKEN_V4, sym: "LADDER", dec: 18 }); }
   var rank = function(t){ return t.addr.toLowerCase() === WHYPE.toLowerCase() ? 0 : (t.addr.toLowerCase() === USDC.toLowerCase() ? 1 : 2); };
   out.sort(function(x, y){ return rank(x) - rank(y) || x.sym.localeCompare(y.sym); });
   return out;
@@ -3842,8 +3956,9 @@ function renderAggRegistry(){
   var box = $("aggRows"); if(!box) return;
   box.innerHTML = AGG_SOURCES.map(function(s){
     var pill = s.status === "live" ? '<span class="statuspill live">Live · mainnet</span>' : (s.status === "viewonly" ? '<span class="statuspill soon">View-only</span>' : '<span class="statuspill pending">Pending deploy</span>');
-    var router = s.router
-      ? '<a href="' + EXPLORER + '/address/' + s.router + '" target="_blank" rel="noopener" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + shortAddr(s.router) + ' ↗</a>'
+    var linkAddr = s.poolManager || s.router;
+    var router = linkAddr
+      ? '<a href="' + EXPLORER + '/address/' + linkAddr + '" target="_blank" rel="noopener" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + (s.poolManager ? "PoolManager " : "") + shortAddr(linkAddr) + ' ↗</a>'
       : '<span style="color:var(--muted2);font-family:ui-monospace,Menlo,monospace;font-size:12.5px">' + (s.status === "pending-deploy" ? "— pending deploy" : "— none verified") + '</span>';
     return '<div class="aggrow">' +
       '<div><div class="vname">' + esc(s.name) + '</div><div class="vnote">' + esc(s.note) + '</div></div>' +
@@ -3881,6 +3996,13 @@ async function runAggCompare(){
     var rows = [];
     for(var vi = 0; vi < AGG_SOURCES.length; vi++){
       var src = AGG_SOURCES[vi], ad = aggAdapter(src);
+      if(src.adapter === "v4"){
+        var vq = null;
+        try { vq = await v4QuoteForPair(tIn.addr, tOut.addr, amtIn); } catch(e){ vq = null; }
+        if(vq) rows.push({ src: src, path: vq.path, out: vq.out });
+        else rows.push({ src: src, path: [tIn.addr, tOut.addr], out: null });
+        continue;
+      }
       if(src.status !== "live" || !ad){
         rows.push({ src: src, pending: true });
         continue;
@@ -3949,6 +4071,644 @@ function renderAggResults(rows, tIn, tOut, amtIn){
   $("aggStatBest").textContent = best ? best.src.name + " · " + aggPathLabel(best.path) : "No route";
 }
 
+/* ================= Uniswap V4 adapter (PoolManager) =================
+   Verified on-chain in the 2026-11-11 census (mainnet-config/v4-census.md):
+   PoolManager, Quoter (struct-form quoteExactInputSingle, selector
+   0xaa9d21cb — the flattened tuple form reverts on this deployment),
+   StateView and Permit2 all answered live; the pinned $LADDER pool quote
+   reproduced the census figure exactly (0.1 HYPE -> 2,304,074.89 LADDER).
+   Execution calldata is templated byte-for-byte on real Universal Router
+   transactions decoded from chain (commands 0x10 = V4_SWAP; actions
+   SWAP_EXACT_IN_SINGLE 0x06 -> SETTLE 0x0b / SETTLE_ALL 0x0c -> TAKE_ALL
+   0x0e; the swap param carries the leading offset word and the extra zero
+   word before the hookData offset that this deployment's encoder emits).
+   Both directions of the LADDER/native pool simulated GREEN via eth_call
+   before this shipped (native-in at 0.001 and 0.1 HYPE; LADDER-in from the
+   holder's address with Permit2 + token allowance state overrides), and
+   every in-app V4 swap re-simulates its exact calldata before sending.
+   Single-pool V4 routes execute; two-hop V4 routes are quote-only. */
+var v4Pools = [];
+var v4KnownKeys = {}; /* poolId (lowercase) -> PoolKey record */
+var v4Scan = { running:false, done:false, cursor:null, chunks:0 };
+var V4_REGISTRY_KEY = "lslp_v4_registry_v1";
+var V4_VENUE = { id:"uniswap-v4", name:"Uniswap V4", router: V4_UR };
+
+/* ---------- identity / matching ---------- */
+function v4Identity(addr){ return addr.toLowerCase() === WHYPE.toLowerCase() ? "HYPE" : addr.toLowerCase(); }
+function v4CurrencyIdentity(c){ var l = c.toLowerCase(); return (l === NATIVE_ADDR || l === WHYPE.toLowerCase()) ? "HYPE" : l; }
+function v4CurrencyIs(currency, effAddr){
+  var c = currency.toLowerCase(), e = effAddr.toLowerCase();
+  if(e === WHYPE.toLowerCase()) return c === NATIVE_ADDR || c === WHYPE.toLowerCase();
+  return c === e;
+}
+function v4FindDirectPool(addrIn, addrOut){
+  var ii = v4Identity(addrIn), oo = v4Identity(addrOut);
+  if(ii === oo) return null;
+  for(var i = 0; i < v4Pools.length; i++){
+    var p = v4Pools[i];
+    var c0 = v4CurrencyIdentity(p.currency0), c1 = v4CurrencyIdentity(p.currency1);
+    if(c0 === ii && c1 === oo) return { pool: p, zeroForOne: true };
+    if(c1 === ii && c0 === oo) return { pool: p, zeroForOne: false };
+  }
+  return null;
+}
+function v4FindLegPools(addrIn, addrOut){
+  /* Two-hop through NATIVE HYPE only (the requirement's hub): leg1 takes
+     the input token into native, leg2 takes native into the output token. */
+  var ii = v4Identity(addrIn), oo = v4Identity(addrOut);
+  if(ii === "HYPE" || oo === "HYPE" || ii === oo) return null;
+  var leg1 = null, leg2 = null;
+  for(var i = 0; i < v4Pools.length; i++){
+    var p = v4Pools[i];
+    var c0n = p.currency0.toLowerCase() === NATIVE_ADDR, c1n = p.currency1.toLowerCase() === NATIVE_ADDR;
+    if(!c0n && !c1n) continue;
+    var other = c0n ? p.currency1 : p.currency0, oi = v4CurrencyIdentity(other);
+    if(oi === ii && !leg1) leg1 = { pool: p, zeroForOne: c0n ? false : true };
+    if(oi === oo && !leg2) leg2 = { pool: p, zeroForOne: c0n ? true : false };
+  }
+  /* leg1 zeroForOne: input currency is `other` — if other is currency1
+     (native is currency0) the swap goes currency1 -> currency0, so
+     zeroForOne is false; if other is currency0, true. leg2: input is
+     native — zeroForOne is true when native is currency0. The flags
+     computed above already encode exactly that. */
+  if(leg1 && leg2 && leg1.pool !== leg2.pool) return { leg1: leg1, leg2: leg2 };
+  return null;
+}
+
+/* ---------- pricing (spot from StateView sqrtPriceX96) ---------- */
+function v4SqrtF(p){ return Number(p.sqrtPriceX96) / 7.922816251426434e28; /* 2^96 */ }
+function v4PriceC0InC1(p){ /* human price of 1 currency0, in currency1 */
+  var s = v4SqrtF(p); if(!s) return null;
+  return s * s * Math.pow(10, p.dec0 - p.dec1);
+}
+function v4HypeUsdc(){ /* human USDC per 1 HYPE from the pinned ref pool */
+  for(var i = 0; i < v4Pools.length; i++){
+    var p = v4Pools[i];
+    if(p.poolId.toLowerCase() === V4_PINNED_POOLS[1].poolId.toLowerCase()){
+      var v = v4PriceC0InC1(p); /* currency0 is native, currency1 is USDC */
+      return v && v > 0 ? v : null;
+    }
+  }
+  return null;
+}
+function v4PriceOf(addr){
+  if(!addr) return null;
+  var a = addr.toLowerCase();
+  if(a === NATIVE_ADDR || isHype(addr)) return 1;
+  if(a === USDC.toLowerCase()){ var h = v4HypeUsdc(); return h ? 1 / h : null; }
+  var res = null;
+  v4Pools.forEach(function(p){
+    if(res !== null) return;
+    var idx = p.currency0.toLowerCase() === a ? 0 : (p.currency1.toLowerCase() === a ? 1 : -1);
+    if(idx < 0) return;
+    var oAddr = idx === 0 ? p.currency1 : p.currency0;
+    var oPrice = null, ol = oAddr.toLowerCase();
+    if(ol === NATIVE_ADDR || isHype(oAddr)) oPrice = 1;
+    else if(ol === USDC.toLowerCase()){ var hh = v4HypeUsdc(); if(hh) oPrice = 1 / hh; }
+    if(oPrice === null) return;
+    var p01 = v4PriceC0InC1(p); if(!p01) return;
+    /* price of currency idx denominated in the other currency */
+    var spot = idx === 0 ? p01 : 1 / p01;
+    res = spot * oPrice;
+  });
+  return res;
+}
+function v4VirtualAmounts(p){ /* in-range virtual reserves, human units */
+  var s = v4SqrtF(p); if(!s || !p.liquidity) return { h0: 0, h1: 0 };
+  var L = Number(p.liquidity);
+  return { h0: (L / s) / Math.pow(10, p.dec0), h1: (L * s) / Math.pow(10, p.dec1) };
+}
+function v4PoolValueHype(p){
+  if(!p || !p.sqrtPriceX96) return 0;
+  var va = v4VirtualAmounts(p), v = 0;
+  var pr0 = v4PriceOf(p.currency0), pr1 = v4PriceOf(p.currency1);
+  if(pr0) v += va.h0 * pr0;
+  if(pr1) v += va.h1 * pr1;
+  return v;
+}
+function v4FeeLabel(pool){
+  if(!pool) return "dynamic fee (hook-set)";
+  if(pool.fee === V4_DYNAMIC_FEE){
+    var isLadder = pool.currency0.toLowerCase() === LADDER_TOKEN_V4 || pool.currency1.toLowerCase() === LADDER_TOKEN_V4;
+    return isLadder && pool.pinned ? "~1% (hook) · dynamic fee" : "dynamic fee (hook-set)";
+  }
+  return parseFloat((pool.fee / 10000).toFixed(4)) + "% pool fee";
+}
+
+/* ---------- Multicall3 aggregate3 (bulk StateView reads) ---------- */
+function mcEncBytesPad(hexNo0x){
+  var n = hexNo0x.length / 2, pad = ((n + 31) >> 5) * 32;
+  return wordUint(BigInt(n)) + hexNo0x + "00".repeat(pad - n);
+}
+function mcAggregate3Data(calls){
+  var offs = [], tails = [], off = calls.length * 32;
+  calls.forEach(function(c){
+    var enc = wordAddr(c.to) + wordUint(1n) + wordUint(96n) + mcEncBytesPad(c.data);
+    offs.push(wordUint(BigInt(off))); tails.push(enc); off += enc.length / 2;
+  });
+  return SEL.aggregate3 + wordUint(32n) + wordUint(BigInt(calls.length)) + offs.join("") + tails.join("");
+}
+function mcDecResults(hex){
+  if(!hex || hex === "0x") return [];
+  var h = hex.replace("0x", "");
+  var arrOff = Number(decUint(hex, 0));
+  var n = Number(BigInt("0x" + h.slice(arrOff * 2, arrOff * 2 + 64)));
+  var base = arrOff + 32, out = [];
+  for(var i = 0; i < n; i++){
+    var o = Number(BigInt("0x" + h.slice((base + i * 32) * 2, (base + i * 32) * 2 + 64)));
+    var start = base + o;
+    var succ = decUint("0x" + h.slice(start * 2, start * 2 + 64), 0) === 1n;
+    var boff = Number(BigInt("0x" + h.slice((start + 32) * 2, (start + 32) * 2 + 64)));
+    var bstart = start + boff;
+    var blen = Number(BigInt("0x" + h.slice(bstart * 2, bstart * 2 + 64)));
+    out.push({ success: succ, data: "0x" + h.slice(bstart * 2 + 64, bstart * 2 + 64 + blen * 2) });
+  }
+  return out;
+}
+function decTick(slot0Hex){
+  var t = decUint(slot0Hex, 1);
+  if(t >= (1n << 255n)) t -= (1n << 256n);
+  return Number(t);
+}
+
+/* ---------- pool state / metadata ---------- */
+async function v4FetchStates(keys){
+  var states = {};
+  for(var s = 0; s < keys.length; s += 200){
+    var slice = keys.slice(s, s + 200), calls = [];
+    slice.forEach(function(k){
+      calls.push({ to: V4_STATEVIEW, data: V4_GETSLOT0_SEL.slice(2) + k.poolId.slice(2) });
+      calls.push({ to: V4_STATEVIEW, data: V4_GETLIQ_SEL.slice(2) + k.poolId.slice(2) });
+    });
+    var hex = await ethCall(MULTICALL, mcAggregate3Data(calls));
+    var res = mcDecResults(hex);
+    slice.forEach(function(k, i){
+      var s0 = res[i * 2], lq = res[i * 2 + 1];
+      if(s0 && s0.success && lq && lq.success && s0.data !== "0x")
+        states[k.poolId.toLowerCase()] = { sqrt: decUint(s0.data, 0), tick: decTick(s0.data), liquidity: decUint(lq.data, 0) };
+    });
+    if(s + 200 < keys.length) await sleep(120);
+  }
+  return states;
+}
+async function v4FetchMetas(addrs){
+  var out = {};
+  for(var s = 0; s < addrs.length; s += 150){
+    var slice = addrs.slice(s, s + 150), calls = [];
+    slice.forEach(function(a){
+      calls.push({ to: a, data: SEL.symbol.slice(2) });
+      calls.push({ to: a, data: SEL.name.slice(2) });
+      calls.push({ to: a, data: SEL.decimals.slice(2) });
+    });
+    try {
+      var hex = await ethCall(MULTICALL, mcAggregate3Data(calls));
+      var res = mcDecResults(hex);
+      slice.forEach(function(a, i){
+        var m = { symbol: "???", name: "Token", decimals: 18 };
+        if(res[i * 3] && res[i * 3].success) m.symbol = decString(res[i * 3].data) || m.symbol;
+        if(res[i * 3 + 1] && res[i * 3 + 1].success) m.name = decString(res[i * 3 + 1].data) || m.name;
+        if(res[i * 3 + 2] && res[i * 3 + 2].success && res[i * 3 + 2].data !== "0x") m.decimals = Number(decUint(res[i * 3 + 2].data, 0));
+        if(isHype(a)) m.symbol = "WHYPE";
+        out[a.toLowerCase()] = m;
+        tokenMetaCache[a.toLowerCase()] = { symbol: m.symbol, name: m.name, decimals: m.decimals };
+      });
+    } catch(e){
+      for(var j = 0; j < slice.length; j++){
+        try { var tm = await tokenMeta(slice[j]); out[slice[j].toLowerCase()] = { symbol: tm.symbol, name: tm.name, decimals: tm.decimals }; } catch(_){}
+      }
+    }
+    if(s + 150 < addrs.length) await sleep(120);
+  }
+  return out;
+}
+async function v4BuildPools(keys){
+  var states = await v4FetchStates(keys);
+  var need = {}, addrs = [];
+  keys.forEach(function(k){
+    [k.currency0, k.currency1].forEach(function(c){
+      var l = c.toLowerCase();
+      if(l !== NATIVE_ADDR && !need[l]){ need[l] = true; if(!tokenMetaCache[l]) addrs.push(c); }
+    });
+  });
+  var metas = addrs.length ? await v4FetchMetas(addrs) : {};
+  function metaFor(c){
+    var l = c.toLowerCase();
+    if(l === NATIVE_ADDR) return { sym: "HYPE", name: "Hyperliquid (native)", dec: 18 };
+    if(isHype(c)) return { sym: "HYPE", name: "Hyperliquid (wrapped)", dec: 18 };
+    var m = metas[l] || tokenMetaCache[l];
+    if(m) return { sym: m.symbol, name: m.name, dec: m.decimals };
+    return { sym: "???", name: "Token", dec: 18 };
+  }
+  var out = [];
+  keys.forEach(function(k){
+    var st = states[k.poolId.toLowerCase()];
+    if(!st) return;
+    if(st.liquidity === 0n && !k.pinned) return;
+    var m0 = metaFor(k.currency0), m1 = metaFor(k.currency1);
+    out.push({ isV4: true, poolId: k.poolId, pair: k.poolId,
+      currency0: k.currency0, currency1: k.currency1, token0: k.currency0, token1: k.currency1,
+      fee: k.fee, tickSpacing: k.tickSpacing, hooks: k.hooks, pinned: !!k.pinned,
+      sqrtPriceX96: st.sqrt, tick: st.tick, liquidity: st.liquidity,
+      sym0: m0.sym, name0: m0.name, dec0: m0.dec, sym1: m1.sym, name1: m1.name, dec1: m1.dec,
+      dex: "uniswap-v4", dexName: "Uniswap V4", dexRouter: null, err: null, lpBal: null });
+  });
+  return out;
+}
+function v4SortCap(list){
+  var pinned = list.filter(function(p){ return p.pinned; });
+  var rest = list.filter(function(p){ return !p.pinned; });
+  rest.sort(function(a, b){ return v4PoolValueHype(b) - v4PoolValueHype(a); });
+  return pinned.concat(rest.slice(0, 150));
+}
+async function v4RebuildPools(){
+  var keys = Object.keys(v4KnownKeys).map(function(id){ return v4KnownKeys[id]; });
+  if(!keys.length){ v4Pools = []; return; }
+  var built = await v4BuildPools(keys);
+  v4Pools = built; /* set before valuing so cross-prices resolve */
+  v4Pools = v4SortCap(built);
+}
+async function v4LiquidityFilter(keys){
+  var keep = [];
+  for(var s = 0; s < keys.length; s += 400){
+    var slice = keys.slice(s, s + 400);
+    var calls = slice.map(function(k){ return { to: V4_STATEVIEW, data: V4_GETLIQ_SEL.slice(2) + k.poolId.slice(2) }; });
+    var hex = await ethCall(MULTICALL, mcAggregate3Data(calls));
+    var res = mcDecResults(hex);
+    slice.forEach(function(k, i){ if(res[i] && res[i].success && res[i].data !== "0x" && decUint(res[i].data, 0) > 0n) keep.push(k); });
+    if(s + 400 < keys.length) await sleep(120);
+  }
+  return keep;
+}
+
+/* ---------- discovery: Initialize logs, newest first, cached ---------- */
+function v4PadTopic(a){ return "0x" + "0".repeat(24) + a.replace("0x", "").toLowerCase(); }
+function v4KeyFromLog(l){
+  try {
+    if(!l.topics || l.topics.length < 4 || !l.data) return null;
+    var d = l.data.replace("0x", "");
+    var fee = Number(BigInt("0x" + d.slice(0, 64)));
+    var tsBig = BigInt("0x" + d.slice(64, 128));
+    if(tsBig >= (1n << 255n)) tsBig -= (1n << 256n);
+    return { poolId: l.topics[1],
+      currency0: "0x" + l.topics[2].slice(26), currency1: "0x" + l.topics[3].slice(26),
+      fee: fee, tickSpacing: Number(tsBig), hooks: "0x" + d.slice(152, 192), pinned: false };
+  } catch(e){ return null; }
+}
+async function v4GetLogs(topics, from, to){
+  return withRetry(function(){
+    return rpcCall("eth_getLogs", [{ address: V4_PM, topics: topics, fromBlock: "0x" + from.toString(16), toBlock: "0x" + to.toString(16) }]);
+  }, 2);
+}
+async function v4ScanChunk(from, to){
+  var variants = [
+    [V4_INIT_TOPIC, null, v4PadTopic(NATIVE_ADDR)],
+    [V4_INIT_TOPIC, null, v4PadTopic(WHYPE)],
+    [V4_INIT_TOPIC, null, null, v4PadTopic(WHYPE)],
+    [V4_INIT_TOPIC, null, v4PadTopic(USDC)],
+    [V4_INIT_TOPIC, null, null, v4PadTopic(USDC)]
+  ];
+  var logs = [];
+  for(var i = 0; i < variants.length; i++){
+    var part = await v4GetLogs(variants[i], from, to);
+    if(part) logs = logs.concat(part);
+  }
+  return logs;
+}
+function v4SaveCache(){
+  try {
+    var keys = v4Pools.map(function(p){
+      return { poolId: p.poolId, currency0: p.currency0, currency1: p.currency1, fee: p.fee, tickSpacing: p.tickSpacing, hooks: p.hooks, pinned: !!p.pinned };
+    });
+    localStorage.setItem(V4_REGISTRY_KEY, JSON.stringify({ ts: Date.now(), cursor: v4Scan.cursor, keys: keys }));
+  } catch(e){}
+}
+function updateV4SourcesLine(){
+  var el = $("v4Sources"); if(!el) return;
+  var n = v4Pools.length;
+  var txt = "Uniswap V4: PoolManager " + V4_PM + " — " +
+    (n ? n + " liquid pool" + (n === 1 ? "" : "s") + " loaded (the pinned $LADDER pool is always included). Quotes come from the V4 Quoter; single-pool swaps execute through the Universal Router after a pre-flight simulation."
+       : "loading PoolManager pools…");
+  if(v4Scan.running) txt += " Scan in progress — newest pools first, more arrive as it walks back.";
+  else if(v4Scan.done) txt += " The scan walks back from the newest blocks and resumes deeper on later visits.";
+  el.textContent = txt;
+}
+function v4OnPoolsChanged(){
+  updateV4SourcesLine();
+  try { renderStats(); } catch(e){}
+  try { renderMarkets(); } catch(e){}
+  try { renderDexFilter(); } catch(e){}
+  try { renderSwapPopular(); } catch(e){}
+  aggRefreshTokenSelects();
+  if(swapInitDone){ try { refreshSwapQuote(); } catch(e){} }
+}
+async function discoverV4Pools(){
+  if(v4Scan.running) return;
+  v4Scan.running = true;
+  updateV4SourcesLine();
+  try {
+    try {
+      var cached = JSON.parse(localStorage.getItem(V4_REGISTRY_KEY) || "null");
+      if(cached && cached.keys){
+        cached.keys.forEach(function(k){ v4KnownKeys[k.poolId.toLowerCase()] = k; });
+        if(typeof cached.cursor === "number") v4Scan.cursor = cached.cursor;
+      }
+    } catch(e){}
+    V4_PINNED_POOLS.forEach(function(k){ v4KnownKeys[k.poolId.toLowerCase()] = k; });
+    if(Object.keys(v4KnownKeys).length){ await v4RebuildPools(); v4OnPoolsChanged(); }
+    /* Targeted $LADDER scan — full history, a handful of logs at most. */
+    try {
+      var head0 = Number(BigInt(await rpcCall("eth_blockNumber", [])));
+      var l1 = await v4GetLogs([V4_INIT_TOPIC, null, v4PadTopic(LADDER_TOKEN_V4)], 0, head0);
+      var l2 = await v4GetLogs([V4_INIT_TOPIC, null, null, v4PadTopic(LADDER_TOKEN_V4)], 0, head0);
+      var lk = {};
+      (l1 || []).concat(l2 || []).forEach(function(l){ var k = v4KeyFromLog(l); if(k) lk[k.poolId.toLowerCase()] = k; });
+      var newL = Object.keys(lk).map(function(id){ return lk[id]; }).filter(function(k){ return !v4KnownKeys[k.poolId.toLowerCase()]; });
+      if(newL.length){
+        var keptL = await v4LiquidityFilter(newL);
+        if(keptL.length){
+          keptL.forEach(function(k){ v4KnownKeys[k.poolId.toLowerCase()] = k; });
+          await v4RebuildPools(); v4OnPoolsChanged();
+        }
+      }
+    } catch(e){}
+    /* Anchor scan, newest blocks first, bounded per visit; the cursor
+       persists so later visits keep walking back. */
+    var head = Number(BigInt(await rpcCall("eth_blockNumber", [])));
+    var from = (v4Scan.cursor !== null && v4Scan.cursor >= 0) ? v4Scan.cursor : head;
+    var budget = 4;
+    while(budget > 0 && from > 0 && v4Pools.length < 150){
+      budget--;
+      var size = 200000, logs = null;
+      while(size >= 12500){
+        try { logs = await v4ScanChunk(Math.max(0, from - size + 1), from); break; }
+        catch(e){ size = Math.floor(size / 2); logs = null; }
+      }
+      if(!logs) break;
+      var chunkFrom = Math.max(0, from - size + 1);
+      from = chunkFrom - 1;
+      v4Scan.cursor = from; v4Scan.chunks++;
+      var seen = {}, fresh = [];
+      logs.forEach(function(l){
+        var k = v4KeyFromLog(l); if(!k) return;
+        var id = k.poolId.toLowerCase();
+        if(seen[id] || v4KnownKeys[id]) return;
+        seen[id] = 1; fresh.push(k);
+      });
+      if(fresh.length){
+        var kept = await v4LiquidityFilter(fresh);
+        kept.forEach(function(k){ v4KnownKeys[k.poolId.toLowerCase()] = k; });
+        if(kept.length) await v4RebuildPools();
+      }
+      v4SaveCache(); v4OnPoolsChanged();
+      await sleep(150);
+    }
+  } catch(e){}
+  v4Scan.running = false;
+  v4Scan.done = true;
+  v4SaveCache();
+  updateV4SourcesLine();
+}
+
+/* ---------- Markets rows for V4 pools ---------- */
+function v4Matches(p){
+  var asset = $("fAsset").value, type = $("fType").value, inW = $("fInWallet").checked;
+  var dexEl = $("fDex"), dexF = dexEl ? dexEl.value : "ALL";
+  var q = ($("fSearch").value || "").trim().toLowerCase();
+  if(dexF !== "ALL" && dexF !== "v4") return false;
+  if(type === "MINE" || type === "HOLD" || inW) return false; /* V4 LP positions are NFTs — out of scope */
+  if(asset !== "ALL"){
+    if(asset === "LADDER"){
+      if(!(p.currency0.toLowerCase() === LADDER_TOKEN_V4 || p.currency1.toLowerCase() === LADDER_TOKEN_V4)) return false;
+    } else {
+      var syms = [p.sym0.toUpperCase(), p.sym1.toUpperCase()];
+      if(syms.indexOf(asset) === -1) return false;
+    }
+  }
+  if(q){
+    var hay = (p.sym0 + " " + p.sym1 + " " + p.name0 + " " + p.name1 + " " + p.poolId + " " + p.currency0 + " " + p.currency1).toLowerCase();
+    if(hay.indexOf(q) === -1) return false;
+  }
+  return true;
+}
+function v4RowHtml(p){
+  var isLadderPool = p.currency0.toLowerCase() === LADDER_TOKEN_V4 || p.currency1.toLowerCase() === LADDER_TOKEN_V4;
+  var feeChip = p.fee === V4_DYNAMIC_FEE
+    ? '<span class="chip tag">' + (isLadderPool && p.pinned ? "~1% (hook) · dynamic fee" : "dynamic fee") + '</span>'
+    : '<span class="chip tag">' + parseFloat((p.fee / 10000).toFixed(4)) + '% fee</span>';
+  var pinnedChip = isLadderPool && p.pinned ? '<span class="chip tag">Montra launch</span>' : "";
+  return '<div class="trow" onclick="openSwapForV4Pool(\'' + p.poolId + '\')" role="button" tabindex="0">' +
+    '<div class="poolcell"><div class="tokicons"><span class="tok t0">' + esc(p.sym0.slice(0, 2).toUpperCase()) + '</span><span class="tok t1">' + esc(p.sym1.slice(0, 2).toUpperCase()) + '</span></div>' +
+    '<div style="min-width:0"><div class="poolname">' + esc(p.sym0) + ' / ' + esc(p.sym1) + '</div>' +
+    '<div class="chips"><span class="chip dex">Uniswap V4</span>' + pinnedChip + feeChip + '<span class="chip">' + esc(p.name0) + '</span><span class="chip">' + esc(p.name1) + '</span></div>' +
+    '<button class="swapmini" onclick="event.stopPropagation();openSwapForV4Pool(\'' + p.poolId + '\')">Swap</button></div></div>' +
+    '<div class="numcell">' + fmtMoney(v4PoolValueHype(p)) + '</div>' +
+    '<div class="numcell"><span class="dash">—</span></div>' +
+    '<div class="numcell"><span class="dash">—</span></div>' +
+    '<div class="numcell"><span class="dash">—</span></div>' +
+    '<div class="chev">›</div></div>';
+}
+function openSwapForV4Pool(poolId){
+  var p = null;
+  v4Pools.forEach(function(vp){ if(vp.poolId.toLowerCase() === poolId.toLowerCase()) p = vp; });
+  if(!p) return;
+  function tok(c, sym, name, dec){
+    if(c.toLowerCase() === NATIVE_ADDR || isHype(c)) return { addr: null, sym: "HYPE", name: "Hyperliquid (native)", dec: 18 };
+    var f = swapTokByEff(c);
+    if(f) return f;
+    return { addr: c, sym: sym, name: name, dec: dec };
+  }
+  var t0 = tok(p.currency0, p.sym0, p.name0, p.dec0), t1 = tok(p.currency1, p.sym1, p.name1, p.dec1);
+  if(t0 && t1 && swapKey(t0) !== swapKey(t1)){
+    swapInTok = t0; swapOutTok = t1; swapQuote = null;
+    var inp = $("swapAmtIn"); if(inp) inp.value = "";
+  }
+  showView("swap");
+}
+
+/* ---------- quoting (V4 Quoter) ---------- */
+function encV4Quote(pool, zeroForOne, amtIn){
+  return V4_QUOTE_SEL + wordUint(32n) +
+    wordAddr(pool.currency0) + wordAddr(pool.currency1) +
+    wordUint(BigInt(pool.fee)) + wordUint(BigInt(pool.tickSpacing) & ((1n << 256n) - 1n)) + wordAddr(pool.hooks) +
+    wordUint(zeroForOne ? 1n : 0n) + wordUint(amtIn) + wordUint(256n) + wordUint(0n);
+}
+async function v4QuoteSingle(pool, zeroForOne, amtIn){
+  var res = await quoteBatch([{ to: V4_QUOTER, data: encV4Quote(pool, zeroForOne, amtIn) }]);
+  if(!res[0] || res[0] === "0x") return null;
+  var out = decUint(res[0], 0);
+  return out > 0n ? out : null;
+}
+async function v4QuoteTwoHop(legs, amtIn){
+  var mid = await v4QuoteSingle(legs.leg1.pool, legs.leg1.zeroForOne, amtIn);
+  if(mid === null) return null;
+  return v4QuoteSingle(legs.leg2.pool, legs.leg2.zeroForOne, mid);
+}
+async function v4QuoteForPair(addrIn, addrOut, amtIn){
+  var d = v4FindDirectPool(addrIn, addrOut);
+  if(d){
+    var o = await v4QuoteSingle(d.pool, d.zeroForOne, amtIn);
+    return o !== null ? { out: o, path: [addrIn, addrOut] } : null;
+  }
+  var legs = v4FindLegPools(addrIn, addrOut);
+  if(legs){
+    var o2 = await v4QuoteTwoHop(legs, amtIn);
+    return o2 !== null ? { out: o2, path: [addrIn, WHYPE, addrOut] } : null;
+  }
+  return null;
+}
+
+/* ---------- execution (Universal Router, simulation-gated) ---------- */
+function v4BytesPad(hex){
+  var n = hex.length / 2, pad = ((n + 31) >> 5) * 32;
+  return wordUint(BigInt(n)) + hex + "00".repeat(pad - n);
+}
+function v4BytesArray(items){
+  var offs = [], tails = [], off = items.length * 32;
+  items.forEach(function(it){
+    var t = v4BytesPad(it);
+    offs.push(wordUint(BigInt(off))); tails.push(t); off += t.length / 2;
+  });
+  return wordUint(BigInt(items.length)) + offs.join("") + tails.join("");
+}
+function buildV4Execute(pool, zeroForOne, amtIn, minOut, recipient, deadline){
+  /* Byte-identical structure to the decoded production transactions:
+     swap param = 0x20 offset word, PoolKey, zeroForOne, amountIn,
+     amountOutMinimum, a zero word, hookData offset 320, empty hookData. */
+  var key = wordAddr(pool.currency0) + wordAddr(pool.currency1) +
+    wordUint(BigInt(pool.fee)) + wordUint(BigInt(pool.tickSpacing) & ((1n << 256n) - 1n)) + wordAddr(pool.hooks);
+  var pSwap = wordUint(32n) + key + wordUint(zeroForOne ? 1n : 0n) + wordUint(amtIn) + wordUint(minOut) +
+    wordUint(0n) + wordUint(320n) + wordUint(0n);
+  var inCur = zeroForOne ? pool.currency0 : pool.currency1;
+  var outCur = zeroForOne ? pool.currency1 : pool.currency0;
+  var pTake = wordAddr(outCur) + wordAddr(recipient) + wordUint(0n);
+  var actions, pSettle, valueHex;
+  if(inCur.toLowerCase() === NATIVE_ADDR){
+    actions = "060b0e"; /* SWAP -> SETTLE (native, payerIsUser=false) -> TAKE_ALL */
+    pSettle = wordAddr(NATIVE_ADDR) + wordUint(0n) + wordUint(0n);
+    valueHex = "0x" + amtIn.toString(16);
+  } else {
+    actions = "060c0e"; /* SWAP -> SETTLE_ALL (Permit2) -> TAKE_ALL */
+    pSettle = wordAddr(inCur) + wordUint(amtIn);
+  }
+  var actionsEnc = v4BytesPad(actions);
+  var paramsEnc = v4BytesArray([pSwap, pSettle, pTake]);
+  var v4 = wordUint(64n) + wordUint(BigInt(64 + actionsEnc.length / 2)) + actionsEnc + paramsEnc;
+  var cmdsEnc = v4BytesPad("10");
+  var inputsEnc = v4BytesArray([v4]);
+  var data = UR_EXECUTE_SEL + wordUint(96n) + wordUint(BigInt(96 + cmdsEnc.length / 2)) + wordUint(deadline) + cmdsEnc + inputsEnc;
+  return { data: data, valueHex: valueHex };
+}
+async function permit2AllowanceOf(token){
+  var hex = await ethCall(PERMIT2, PERMIT2_ALLOWANCE_SEL + wordAddr(account) + wordAddr(token) + wordAddr(V4_UR));
+  return { amount: decUint(hex, 0), expiration: decUint(hex, 1) };
+}
+async function doPermit2Approve(token, amount){
+  if(!walletProvider){ setStatus("swapStatus", "Connect your wallet first.", "info"); return; }
+  var exp = BigInt(Math.floor(Date.now() / 1000) + 30 * 86400);
+  var data = PERMIT2_APPROVE_SEL + wordAddr(token) + wordAddr(V4_UR) + wordUint(amount) + wordUint(exp);
+  setStatus("swapStatus", "Permit2 allowance requested — confirm it in your wallet. Exact amount only, 30-day expiry.", "info");
+  try {
+    var hash = await sendTx(PERMIT2, data);
+    setStatus("swapStatus", "Permit2 allowance sent: " + txLink(hash) + " — waiting for confirmation…", "info");
+    await waitReceipt(hash);
+    setStatus("swapStatus", "Permit2 allowance set. Tx " + txLink(hash), "ok");
+    swapCheckApproval();
+  } catch(e){ setStatus("swapStatus", friendlyErr(e), "err"); }
+}
+async function v4RenderApprovals(wrap, q){
+  if(!account || !q || !q.v4Pool || q.v4Legs) return;
+  var inCur = q.zeroForOne ? q.v4Pool.currency0 : q.v4Pool.currency1;
+  if(inCur.toLowerCase() === NATIVE_ADDR) return;
+  try {
+    var al = await allowanceOf(inCur, PERMIT2);
+    if(al < q.amtIn && $("swapApproveWrap")){
+      var b1 = document.createElement("button");
+      b1.className = "bigbtn ghost";
+      b1.textContent = "Approve " + swapInTok.sym + " for Permit2 (" + fmtUnits(q.amtIn, swapInTok.dec) + ")";
+      b1.onclick = function(){ doApprove(inCur, q.amtIn, "swapStatus", function(){ swapCheckApproval(); }, PERMIT2); };
+      wrap.appendChild(b1);
+    }
+    var pa = await permit2AllowanceOf(inCur);
+    var nowS = BigInt(Math.floor(Date.now() / 1000));
+    if((pa.amount < q.amtIn || pa.expiration <= nowS) && $("swapApproveWrap")){
+      var b2 = document.createElement("button");
+      b2.className = "bigbtn ghost";
+      b2.textContent = "Allow Permit2 → Universal Router (" + fmtUnits(q.amtIn, swapInTok.dec) + " " + swapInTok.sym + ")";
+      b2.onclick = function(){ doPermit2Approve(inCur, q.amtIn); };
+      wrap.appendChild(b2);
+    }
+  } catch(e){}
+}
+async function doSwapV4(q, amtIn){
+  var pool = q.v4Pool;
+  var inCur = q.zeroForOne ? pool.currency0 : pool.currency1;
+  var nativeIn = inCur.toLowerCase() === NATIVE_ADDR;
+  if(!nativeIn){
+    try {
+      var al1 = await allowanceOf(inCur, PERMIT2);
+      if(al1 < amtIn){ setStatus("swapStatus", "This V4 swap settles through Permit2 — approve " + esc(swapInTok.sym) + " for Permit2 first (button above), then swap.", "info"); swapCheckApproval(); return; }
+      var pa = await permit2AllowanceOf(inCur);
+      if(pa.amount < amtIn || pa.expiration <= BigInt(Math.floor(Date.now() / 1000))){ setStatus("swapStatus", "This V4 swap settles through Permit2 — set the Permit2 → Universal Router allowance first (button above), then swap.", "info"); swapCheckApproval(); return; }
+    } catch(e){ setStatus("swapStatus", "Could not read the Permit2 allowances — the RPC hiccuped. Nothing was sent; try again.", "err"); return; }
+  }
+  var slip = swapSlipVal();
+  var amtOutMin = minOut(q.amountOut, slip);
+  var deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
+  var built = buildV4Execute(pool, q.zeroForOne, amtIn, amtOutMin, account, deadline);
+  var btn = $("swapGo");
+  btn.disabled = true; btn.textContent = "Swapping…";
+  /* Pre-flight: the exact calldata, simulated from the user's own
+     account — a revert here means the wallet is never asked to send. */
+  setStatus("swapStatus", "Checking this V4 swap on-chain before sending…", "info");
+  try { await simulateCall(V4_UR, built.data, built.valueHex); }
+  catch(simErr){
+    setStatus("swapStatus", "Swap not sent — the Universal Router rejected this exact swap in a pre-flight check (" + esc((revertText(simErr) || "revert").slice(0, 140)) + "). The pool may have moved; re-quote and try again.", "err");
+    swapUpdateButton();
+    return;
+  }
+  setStatus("swapStatus", "Check passed — swap requested, confirm it in your wallet. Route: Uniswap V4 · " + esc(swapPathLabel(q.path)) + ", minimum received " + fmtUnits(amtOutMin, swapOutTok.dec, 6) + " " + esc(swapOutTok.sym) + ".", "info");
+  try {
+    var hash = await sendTx(V4_UR, built.data, built.valueHex);
+    setStatus("swapStatus", "Swap sent: " + txLink(hash) + " — waiting for confirmation…", "info");
+    await waitReceipt(hash);
+    recordActivity({ ts: Date.now(), type: "Swap", pair: "", sym0: swapInTok.sym, sym1: swapOutTok.sym, dec0: swapInTok.dec, dec1: swapOutTok.dec,
+      amt0: amtIn.toString(), amt1: q.amountOut.toString(), hash: hash,
+      inSym: swapInTok.sym, outSym: swapOutTok.sym, inAmt: fmtPlain(amtIn, swapInTok.dec), outAmt: fmtPlain(q.amountOut, swapOutTok.dec) });
+    try {
+      var arr = [];
+      try { arr = JSON.parse(localStorage.getItem(SWAPS_KEY) || "[]"); } catch(e){ arr = []; }
+      arr.unshift({ ts: Date.now(), inSym: swapInTok.sym, outSym: swapOutTok.sym, inAmt: fmtPlain(amtIn, swapInTok.dec), outAmt: fmtPlain(q.amountOut, swapOutTok.dec), hash: hash });
+      if(arr.length > 20) arr = arr.slice(0, 20);
+      localStorage.setItem(SWAPS_KEY, JSON.stringify(arr));
+    } catch(e){}
+    renderSwapRecent();
+    setStatus("swapStatus", "Swap confirmed. Tx " + txLink(hash) + " — refreshing balances…", "ok");
+    swapBalCache = {};
+    await refreshUserData();
+    renderMarkets(); renderPortfolio();
+    refreshSwapQuote();
+    setStatus("swapStatus", "Swap confirmed. Tx " + txLink(hash), "ok");
+  } catch(e){
+    setStatus("swapStatus", friendlyErr(e), "err");
+  }
+  swapUpdateButton();
+}
+
+/* ---------- Aggregator token-select refresh after V4 loads ---------- */
+function aggRefreshTokenSelects(){
+  var a = $("aggIn"), b = $("aggOut");
+  if(!a || !b || !aggInitDone) return;
+  var va = a.value, vb = b.value;
+  var toks = aggTokens();
+  if(!toks.length) return;
+  var opts = toks.map(function(t){ return '<option value="' + t.addr + '">' + esc(t.sym) + '</option>'; }).join("");
+  a.innerHTML = opts; b.innerHTML = opts;
+  var has = function(v){ return toks.some(function(t){ return t.addr.toLowerCase() === String(v || "").toLowerCase(); }); };
+  if(va && has(va)) a.value = va;
+  if(vb && has(vb)) b.value = vb;
+  aggSyncSym();
+}
+
 /* ================= Boot ================= */
 (async function boot(){
   /* Multicall3 presence note: reads use JSON-RPC batching to the same end —
@@ -3956,6 +4716,7 @@ function renderAggResults(rows, tIn, tOut, amtIn){
   void MULTICALL;
   try { drawSpark(JSON.parse(localStorage.getItem("lslp_snapshots_v2") || "[]")); } catch(e){ drawSpark([]); }
   try {
+    var dv4 = discoverV4Pools(); if(dv4 && dv4.catch) dv4.catch(function(){});
     await loadPools();
     loadSwapBars();
   } catch(e){
