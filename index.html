@@ -984,10 +984,13 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
    Swap: Jupiter Swap API v1 (lite-api.jup.ag, keyless).
    LP:   Raydium CPMM via @raydium-io/raydium-sdk-v2 (loaded lazily from esm.sh).
    Wallet: direct provider injection (Phantom window.solana, Solflare window.solflare).
-   RPC:  PublicNode primary, mainnet-beta fallback. Balance reads try both:
-         PublicNode's free endpoint rejects getTokenAccountsByOwner
-         ("Request blocked"), so token balances come from whichever endpoint
-         answers that method; the working endpoint is remembered.
+   RPC:  PublicNode primary, mainnet-beta fallback. Balance reads are split:
+         native SOL (getBalance, served by every endpoint) loads on its own,
+         while token balances (getParsedTokenAccountsByOwner — rejected by
+         PublicNode's free endpoint with "Request blocked") come from
+         whichever endpoint answers that method; the working endpoint is
+         remembered. Every balance read runs against a hard deadline, so a
+         stalled endpoint can never wedge a panel on "loading…".
    Every send is gated by connection.simulateTransaction. */
 var RPC_PRIMARY = "https://solana-rpc.publicnode.com";
 var RPC_FALLBACK = "https://api.mainnet-beta.solana.com";
@@ -1010,8 +1013,8 @@ var state = {
   swapIn: TOKENS.SOL, swapOut: TOKENS.USDC, quote: null, quoteSeq: 0,
   balances: {}, /* mint -> {amount (ui), decimals} ; native SOL under WSOL key */
   lpBalances: {}, /* lpMint -> ui amount */
-  balStatus: "idle", /* idle | loading | ok | error — drives the balance labels */
-  balLoading: false, balRpcIdx: 0, /* index into BAL_RPC_URLS that last served token balances */
+  solStatus: "idle", tokStatus: "idle", /* idle | loading | ok | error — per-source load state (native SOL vs token scan) driving the balance labels */
+  solLoading: false, tokLoading: false, balRpcIdx: 0, /* index into BAL_RPC_URLS that last served token balances */
   activity: [], prices: {} /* mint -> usd */
 };
 var connection = null;
@@ -1100,14 +1103,14 @@ async function connectWallet(p) {
     var pk = (res && res.publicKey) ? res.publicKey : p.provider.publicKey;
     state.provider = p.provider; state.providerName = p.name;
     state.pubkey = pk.toString();
-    state.balStatus = "idle";
+    resetBalState();
     if (p.provider.on) {
       p.provider.on("disconnect", function(){ disconnectWallet(); });
       p.provider.on("accountChanged", function(npk) {
         if (!npk) { disconnectWallet(); return; }
         if (npk.toString() === state.pubkey) return;
         state.pubkey = npk.toString();
-        state.balances = {}; state.lpBalances = {}; state.balStatus = "idle";
+        state.balances = {}; state.lpBalances = {}; resetBalState();
         updateWalletBtn(); updateActionButtons(); renderMarkets();
         toast("Wallet account changed: " + shortAddr(state.pubkey));
         refreshBalances();
@@ -1126,7 +1129,7 @@ async function connectWallet(p) {
 function disconnectWallet() {
   try { if (state.provider && state.provider.disconnect) state.provider.disconnect(); } catch(e) {}
   state.provider = null; state.providerName = null; state.pubkey = null;
-  state.balances = {}; state.lpBalances = {}; state.balStatus = "idle";
+  state.balances = {}; state.lpBalances = {}; resetBalState();
   clearTimeout(refreshBalances._rt);
   updateWalletBtn(); updateActionButtons(); renderMarkets(); renderPortfolio(); renderSwapBalances();
 }
@@ -1145,71 +1148,136 @@ function updateActionButtons() {
 }
 
 /* ---------- balances ----------
-   PublicNode's free endpoint rejects getTokenAccountsByOwner outright
-   ("Request blocked"), which used to abort the whole refresh and leave every
-   token balance stuck at 0 with no error shown. Balance reads therefore try
-   each RPC in turn and stick with the one that answers; a scan is committed
-   only when it completes in full, so a half-failed read never wipes known
-   balances, and a total failure surfaces as a visible error with a retry. */
+   Two independent reads, because the endpoints fail independently:
+   - Native SOL comes from getBalance, which every public endpoint serves.
+     It is fetched and committed on its own, so the SOL balance never waits
+     on — and is never wiped by — the token scan.
+   - Token balances come from getParsedTokenAccountsByOwner, which
+     PublicNode's free endpoint rejects ("Request blocked"), so the scan
+     walks the endpoint list and sticks with the one that answers.
+   Every read carries a hard deadline: web3.js RPC calls have no timeout of
+   their own, and a stalled request would otherwise hold the shared "in
+   flight" latch shut forever, leaving the panel stuck on "loading…" — that
+   is how the SOL balance vanished after the RPC-fallback fix, when it was
+   committed only at the end of the combined token scan, behind one latch.
+   Each scan commits only when it completes in full, so a half-failed read
+   never wipes known balances; a failure with nothing on screen surfaces as
+   a visible error with a retry, and re-checks on its own. */
 var BAL_RPC_URLS = [RPC_PRIMARY, RPC_FALLBACK];
+var BAL_TIMEOUT_MS = 12000;
+var TOKEN_PROGRAMS = ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"];
 var _balConns = {};
 function balConnFor(url) {
   if (!_balConns[url]) _balConns[url] = new solanaWeb3.Connection(url, "confirmed");
   return _balConns[url];
 }
-async function fetchBalancesOnce(c, owner) {
-  var lamports = await c.getBalance(owner);
-  var programs = ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"];
+function withDeadline(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise(function(_, reject) { setTimeout(function() { reject(new Error(label + " did not answer within " + Math.round(ms / 1000) + "s")); }, ms); })
+  ]);
+}
+function resetBalState() {
+  state.solStatus = "idle"; state.tokStatus = "idle";
+  state.solLoading = false; state.tokLoading = false;
+}
+/* Load state for one mint: native SOL and SPL tokens load independently */
+function balStateFor(mint) {
+  var st = mint === WSOL ? state.solStatus : state.tokStatus;
+  if (st === "ok") return "ok";
+  if (st === "error") return "error";
+  return "loading";
+}
+function renderBalSurfaces() {
+  renderSwapBalances();
+  if (state.currentPool) renderDetailBalances();
+  renderMarkets(); renderPortfolio();
+}
+/* One shared self-retry while either read has never succeeded */
+function scheduleBalRetry() {
+  clearTimeout(refreshBalances._rt);
+  refreshBalances._rt = setTimeout(function() { refreshBalances(); }, 5000);
+}
+async function fetchSolOnce(c, owner) {
+  return withDeadline(c.getBalance(owner), BAL_TIMEOUT_MS, "SOL balance read");
+}
+async function refreshSolBalance(owner) {
+  if (state.solLoading) return;
+  state.solLoading = true;
+  var pk = state.pubkey;
+  if (state.solStatus !== "ok") { state.solStatus = "loading"; renderBalSurfaces(); }
+  var lamports = null;
+  for (var i = 0; i < BAL_RPC_URLS.length && lamports === null; i++) {
+    try { lamports = await fetchSolOnce(balConnFor(BAL_RPC_URLS[i]), owner); }
+    catch (e) { /* endpoint failed or stalled — try the next one */ }
+  }
+  state.solLoading = false;
+  if (state.pubkey !== pk) return; /* wallet changed mid-flight: drop the stale read */
+  if (lamports !== null) {
+    state.balances[WSOL] = { amount: lamports / 1e9, decimals: 9 };
+    state.solStatus = "ok";
+    renderBalSurfaces();
+  } else if (state.solStatus !== "ok") {
+    state.solStatus = "error"; renderBalSurfaces(); scheduleBalRetry();
+  }
+  /* A failed background re-check keeps the balance already on screen. */
+}
+async function fetchTokensOnce(c, owner) {
   var fresh = {};
-  for (var i = 0; i < programs.length; i++) {
-    var accts = await c.getParsedTokenAccountsByOwner(owner, { programId: new solanaWeb3.PublicKey(programs[i]) });
+  for (var i = 0; i < TOKEN_PROGRAMS.length; i++) {
+    var accts = await withDeadline(
+      c.getParsedTokenAccountsByOwner(owner, { programId: new solanaWeb3.PublicKey(TOKEN_PROGRAMS[i]) }),
+      BAL_TIMEOUT_MS, "Token balance read");
     accts.value.forEach(function(a) {
       var info = a.account.data.parsed.info;
       var amt = info.tokenAmount.uiAmount || 0;
       if (amt > 0) fresh[info.mint] = { amount: amt, decimals: info.tokenAmount.decimals };
     });
   }
-  /* commit only after the full scan succeeded: replace all token entries so
-     a token spent down to zero disappears instead of lingering as stale */
-  Object.keys(state.balances).forEach(function(m) { if (m !== WSOL) delete state.balances[m]; });
-  Object.keys(fresh).forEach(function(m) { state.balances[m] = fresh[m]; });
-  state.balances[WSOL] = { amount: lamports / 1e9, decimals: 9 };
-  state.lpBalances = {};
-  Object.keys(fresh).forEach(function(m) { state.lpBalances[m] = fresh[m].amount; });
-  return true;
+  return fresh;
 }
-async function refreshBalances() {
-  if (!state.pubkey || state.balLoading) return;
-  state.balLoading = true;
-  var hadData = state.balStatus === "ok";
-  if (!hadData) { state.balStatus = "loading"; renderSwapBalances(); if (state.currentPool) renderDetailBalances(); }
+async function refreshTokenBalances(owner) {
+  if (state.tokLoading) return;
+  state.tokLoading = true;
+  var pk = state.pubkey;
+  if (state.tokStatus !== "ok") { state.tokStatus = "loading"; renderBalSurfaces(); }
+  var fresh = null;
+  for (var i = 0; i < BAL_RPC_URLS.length && !fresh; i++) {
+    var idx = (state.balRpcIdx + i) % BAL_RPC_URLS.length;
+    try { fresh = await fetchTokensOnce(balConnFor(BAL_RPC_URLS[idx]), owner); state.balRpcIdx = idx; }
+    catch (e) { /* this endpoint failed, blocked or stalled the call — try the next one */ }
+  }
+  state.tokLoading = false;
+  if (state.pubkey !== pk) return; /* wallet changed mid-flight: drop the stale read */
+  if (fresh) {
+    /* commit only after the full scan succeeded: replace all token entries
+       so a token spent down to zero disappears instead of lingering as
+       stale. The WSOL entry belongs to the native-SOL read; untouched. */
+    Object.keys(state.balances).forEach(function(m) { if (m !== WSOL) delete state.balances[m]; });
+    Object.keys(fresh).forEach(function(m) { state.balances[m] = fresh[m]; });
+    state.lpBalances = {};
+    Object.keys(fresh).forEach(function(m) { state.lpBalances[m] = fresh[m].amount; });
+    state.tokStatus = "ok";
+    renderBalSurfaces();
+  } else if (state.tokStatus !== "ok") {
+    state.tokStatus = "error"; renderBalSurfaces(); scheduleBalRetry();
+  }
+  /* A failed background re-check keeps the balances already on screen. */
+}
+function refreshBalances() {
+  if (!state.pubkey) return;
   var owner = null;
-  try { owner = new solanaWeb3.PublicKey(state.pubkey); } catch (e) { /* invalid key: fall through to error state */ }
-  var done = false;
-  if (owner) {
-    for (var i = 0; i < BAL_RPC_URLS.length && !done; i++) {
-      var idx = (state.balRpcIdx + i) % BAL_RPC_URLS.length;
-      try { done = await fetchBalancesOnce(balConnFor(BAL_RPC_URLS[idx]), owner); if (done) state.balRpcIdx = idx; }
-      catch (e) { /* this endpoint failed or blocked the call — try the next one */ }
-    }
+  try { owner = new solanaWeb3.PublicKey(state.pubkey); } catch (e) { /* invalid key: report error below */ }
+  if (!owner) {
+    if (state.solStatus !== "ok") state.solStatus = "error";
+    if (state.tokStatus !== "ok") state.tokStatus = "error";
+    renderBalSurfaces();
+    return;
   }
-  state.balLoading = false;
-  if (done) {
-    state.balStatus = "ok";
-    clearTimeout(refreshBalances._rt);
-    renderMarkets(); renderPortfolio();
-    if (state.currentPool) renderDetailBalances();
-    renderSwapBalances();
-  } else if (!hadData) {
-    /* Nothing has ever loaded: say so plainly instead of a silent 0, and retry once on our own */
-    state.balStatus = "error";
-    renderSwapBalances();
-    if (state.currentPool) renderDetailBalances();
-    clearTimeout(refreshBalances._rt);
-    refreshBalances._rt = setTimeout(function() { refreshBalances(); }, 5000);
-  }
-  /* If a background re-check failed but earlier balances are on screen, they
-     stay — the 20s poll will try again on its own. */
+  /* Independent on purpose: the quick getBalance read must not wait for the
+     heavier token scan, and a stall in one can never latch the other. */
+  refreshSolBalance(owner);
+  refreshTokenBalances(owner);
 }
 /* Refresh now, then twice more over the next seconds: a public RPC node can
    lag a beat behind a just-confirmed transaction. */
@@ -1219,11 +1287,12 @@ function refreshBalancesSoon() {
   setTimeout(function() { refreshBalances(); }, 7000);
 }
 function balOf(mint) { var b = state.balances[mint]; return b ? b.amount : 0; }
-/* Plain-text balance value for a mint, honouring the load state */
+/* Plain-text balance value for a mint, honouring that mint's own load state */
 function balDisplay(mint, symbol) {
   if (!state.pubkey) return "—";
-  if (state.balStatus === "error") return "failed to load";
-  if (state.balStatus === "loading") return "loading…";
+  var st = balStateFor(mint);
+  if (st === "error") return "failed to load";
+  if (st === "loading") return "loading…";
   return fmtNum(balOf(mint)) + " " + symbol;
 }
 
@@ -1359,7 +1428,8 @@ function renderDetailBalances() {
   document.getElementById("depBalB").textContent = "Balance: " + balDisplay(p.mintB.address, p.mintB.symbol);
   var lp = p.lpMint ? (state.lpBalances[p.lpMint.address] || 0) : 0;
   document.getElementById("dMyLp").textContent = state.pubkey ? fmtNum(lp) + " LP" : "Connect wallet";
-  document.getElementById("wdBal").textContent = "LP balance: " + (state.pubkey ? (state.balStatus === "error" ? "failed to load" : state.balStatus === "loading" ? "loading…" : fmtNum(lp)) : "—");
+  var lpState = p.lpMint ? balStateFor(p.lpMint.address) : "ok";
+  document.getElementById("wdBal").textContent = "LP balance: " + (state.pubkey ? (lpState === "error" ? "failed to load" : lpState === "loading" ? "loading…" : fmtNum(lp)) : "—");
 }
 function detailTab(t) {
   state.detailTabName = t;
@@ -1538,11 +1608,12 @@ function renderSwapBalances() {
   var el = document.getElementById("swapInBal");
   if (!el) return;
   if (!state.pubkey) { el.textContent = "Balance: —"; return; }
-  if (state.balStatus === "error") {
+  var st = balStateFor(state.swapIn.mint);
+  if (st === "error") {
     el.innerHTML = 'Balance: <span class="balerr">failed to load</span> <button type="button" class="balretry" onclick="refreshBalances()">Retry</button>';
     return;
   }
-  if (state.balStatus === "loading") { el.textContent = "Balance: loading…"; return; }
+  if (st === "loading") { el.textContent = "Balance: loading…"; return; }
   el.textContent = "Balance: " + fmtNum(balOf(state.swapIn.mint)) + " " + state.swapIn.symbol;
 }
 function setSwapSlip(v) {
