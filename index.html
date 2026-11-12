@@ -147,6 +147,8 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 70px}
 .toksym{font-size:15px;font-weight:800;background:var(--panel3);border:1px solid var(--line2);padding:7px 13px;border-radius:999px;white-space:nowrap}
 .amtbox .row2{display:flex;align-items:center;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--muted)}
 .maxbtn{background:none;border:0;color:var(--accent);font-size:12.5px;font-weight:800;padding:2px 4px}
+.balretry{background:none;border:0;color:var(--accent);font-size:12.5px;font-weight:800;padding:0;text-decoration:underline;cursor:pointer}
+.balerr{color:#ffb4b4;font-weight:700}
 .pctchips{display:flex;gap:7px;margin:4px 0 14px;flex-wrap:wrap}
 .pctchips button{background:var(--panel2);border:1px solid var(--line2);color:var(--muted);font-size:13px;font-weight:700;padding:7px 15px;border-radius:999px}
 .pctchips button:hover,.pctchips button.on{color:var(--accent);border-color:var(--accent)}
@@ -982,7 +984,10 @@ select.fselect:disabled{opacity:.55;cursor:not-allowed}
    Swap: Jupiter Swap API v1 (lite-api.jup.ag, keyless).
    LP:   Raydium CPMM via @raydium-io/raydium-sdk-v2 (loaded lazily from esm.sh).
    Wallet: direct provider injection (Phantom window.solana, Solflare window.solflare).
-   RPC:  PublicNode primary, mainnet-beta fallback only.
+   RPC:  PublicNode primary, mainnet-beta fallback. Balance reads try both:
+         PublicNode's free endpoint rejects getTokenAccountsByOwner
+         ("Request blocked"), so token balances come from whichever endpoint
+         answers that method; the working endpoint is remembered.
    Every send is gated by connection.simulateTransaction. */
 var RPC_PRIMARY = "https://solana-rpc.publicnode.com";
 var RPC_FALLBACK = "https://api.mainnet-beta.solana.com";
@@ -1005,6 +1010,8 @@ var state = {
   swapIn: TOKENS.SOL, swapOut: TOKENS.USDC, quote: null, quoteSeq: 0,
   balances: {}, /* mint -> {amount (ui), decimals} ; native SOL under WSOL key */
   lpBalances: {}, /* lpMint -> ui amount */
+  balStatus: "idle", /* idle | loading | ok | error — drives the balance labels */
+  balLoading: false, balRpcIdx: 0, /* index into BAL_RPC_URLS that last served token balances */
   activity: [], prices: {} /* mint -> usd */
 };
 var connection = null;
@@ -1057,6 +1064,7 @@ function showView(v) {
   if (v === "analytics") renderAnalytics();
   if (v === "agg") aggQuote();
   if (v === "vote") renderVoteRows();
+  if (v === "swap" || v === "portfolio" || v === "detail") refreshBalances();
 }
 window.showView = showView;
 
@@ -1092,7 +1100,20 @@ async function connectWallet(p) {
     var pk = (res && res.publicKey) ? res.publicKey : p.provider.publicKey;
     state.provider = p.provider; state.providerName = p.name;
     state.pubkey = pk.toString();
-    if (p.provider.on) p.provider.on("disconnect", function(){ disconnectWallet(); });
+    state.balStatus = "idle";
+    if (p.provider.on) {
+      p.provider.on("disconnect", function(){ disconnectWallet(); });
+      p.provider.on("accountChanged", function(npk) {
+        if (!npk) { disconnectWallet(); return; }
+        if (npk.toString() === state.pubkey) return;
+        state.pubkey = npk.toString();
+        state.balances = {}; state.lpBalances = {}; state.balStatus = "idle";
+        updateWalletBtn(); updateActionButtons(); renderMarkets();
+        toast("Wallet account changed: " + shortAddr(state.pubkey));
+        refreshBalances();
+        if (!document.getElementById("view-portfolio").classList.contains("hidden")) renderPortfolio();
+      });
+    }
     updateWalletBtn();
     toast(p.name + " connected: " + shortAddr(state.pubkey));
     refreshBalances();
@@ -1105,8 +1126,9 @@ async function connectWallet(p) {
 function disconnectWallet() {
   try { if (state.provider && state.provider.disconnect) state.provider.disconnect(); } catch(e) {}
   state.provider = null; state.providerName = null; state.pubkey = null;
-  state.balances = {}; state.lpBalances = {};
-  updateWalletBtn(); updateActionButtons(); renderMarkets(); renderPortfolio();
+  state.balances = {}; state.lpBalances = {}; state.balStatus = "idle";
+  clearTimeout(refreshBalances._rt);
+  updateWalletBtn(); updateActionButtons(); renderMarkets(); renderPortfolio(); renderSwapBalances();
 }
 function updateWalletBtn() {
   var b = document.getElementById("walletBtn");
@@ -1122,30 +1144,88 @@ function updateActionButtons() {
   if (s) s.textContent = state.pubkey ? "Swap" : "Connect wallet to swap";
 }
 
-/* ---------- balances ---------- */
-async function refreshBalances() {
-  if (!state.pubkey) return;
-  try {
-    var c = conn(), owner = new solanaWeb3.PublicKey(state.pubkey);
-    var lamports = await c.getBalance(owner);
-    state.balances[WSOL] = { amount: lamports / 1e9, decimals: 9 };
-    var accts = await c.getParsedTokenAccountsByOwner(owner, { programId: new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA") });
-    var accts22 = await c.getParsedTokenAccountsByOwner(owner, { programId: new solanaWeb3.PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb") });
-    state.lpBalances = {};
-    accts.value.concat(accts22.value).forEach(function(a) {
+/* ---------- balances ----------
+   PublicNode's free endpoint rejects getTokenAccountsByOwner outright
+   ("Request blocked"), which used to abort the whole refresh and leave every
+   token balance stuck at 0 with no error shown. Balance reads therefore try
+   each RPC in turn and stick with the one that answers; a scan is committed
+   only when it completes in full, so a half-failed read never wipes known
+   balances, and a total failure surfaces as a visible error with a retry. */
+var BAL_RPC_URLS = [RPC_PRIMARY, RPC_FALLBACK];
+var _balConns = {};
+function balConnFor(url) {
+  if (!_balConns[url]) _balConns[url] = new solanaWeb3.Connection(url, "confirmed");
+  return _balConns[url];
+}
+async function fetchBalancesOnce(c, owner) {
+  var lamports = await c.getBalance(owner);
+  var programs = ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"];
+  var fresh = {};
+  for (var i = 0; i < programs.length; i++) {
+    var accts = await c.getParsedTokenAccountsByOwner(owner, { programId: new solanaWeb3.PublicKey(programs[i]) });
+    accts.value.forEach(function(a) {
       var info = a.account.data.parsed.info;
-      var mint = info.mint, amt = info.tokenAmount.uiAmount || 0;
-      if (amt > 0) {
-        state.balances[mint] = { amount: amt, decimals: info.tokenAmount.decimals };
-        state.lpBalances[mint] = amt;
-      }
+      var amt = info.tokenAmount.uiAmount || 0;
+      if (amt > 0) fresh[info.mint] = { amount: amt, decimals: info.tokenAmount.decimals };
     });
+  }
+  /* commit only after the full scan succeeded: replace all token entries so
+     a token spent down to zero disappears instead of lingering as stale */
+  Object.keys(state.balances).forEach(function(m) { if (m !== WSOL) delete state.balances[m]; });
+  Object.keys(fresh).forEach(function(m) { state.balances[m] = fresh[m]; });
+  state.balances[WSOL] = { amount: lamports / 1e9, decimals: 9 };
+  state.lpBalances = {};
+  Object.keys(fresh).forEach(function(m) { state.lpBalances[m] = fresh[m].amount; });
+  return true;
+}
+async function refreshBalances() {
+  if (!state.pubkey || state.balLoading) return;
+  state.balLoading = true;
+  var hadData = state.balStatus === "ok";
+  if (!hadData) { state.balStatus = "loading"; renderSwapBalances(); if (state.currentPool) renderDetailBalances(); }
+  var owner = null;
+  try { owner = new solanaWeb3.PublicKey(state.pubkey); } catch (e) { /* invalid key: fall through to error state */ }
+  var done = false;
+  if (owner) {
+    for (var i = 0; i < BAL_RPC_URLS.length && !done; i++) {
+      var idx = (state.balRpcIdx + i) % BAL_RPC_URLS.length;
+      try { done = await fetchBalancesOnce(balConnFor(BAL_RPC_URLS[idx]), owner); if (done) state.balRpcIdx = idx; }
+      catch (e) { /* this endpoint failed or blocked the call — try the next one */ }
+    }
+  }
+  state.balLoading = false;
+  if (done) {
+    state.balStatus = "ok";
+    clearTimeout(refreshBalances._rt);
     renderMarkets(); renderPortfolio();
     if (state.currentPool) renderDetailBalances();
     renderSwapBalances();
-  } catch (e) { /* balances are best-effort; RPC hiccups leave the last values */ }
+  } else if (!hadData) {
+    /* Nothing has ever loaded: say so plainly instead of a silent 0, and retry once on our own */
+    state.balStatus = "error";
+    renderSwapBalances();
+    if (state.currentPool) renderDetailBalances();
+    clearTimeout(refreshBalances._rt);
+    refreshBalances._rt = setTimeout(function() { refreshBalances(); }, 5000);
+  }
+  /* If a background re-check failed but earlier balances are on screen, they
+     stay — the 20s poll will try again on its own. */
+}
+/* Refresh now, then twice more over the next seconds: a public RPC node can
+   lag a beat behind a just-confirmed transaction. */
+function refreshBalancesSoon() {
+  refreshBalances();
+  setTimeout(function() { refreshBalances(); }, 2500);
+  setTimeout(function() { refreshBalances(); }, 7000);
 }
 function balOf(mint) { var b = state.balances[mint]; return b ? b.amount : 0; }
+/* Plain-text balance value for a mint, honouring the load state */
+function balDisplay(mint, symbol) {
+  if (!state.pubkey) return "—";
+  if (state.balStatus === "error") return "failed to load";
+  if (state.balStatus === "loading") return "loading…";
+  return fmtNum(balOf(mint)) + " " + symbol;
+}
 
 /* ---------- prices ---------- */
 async function loadPrices() {
@@ -1275,11 +1355,11 @@ function openPool(id) {
 }
 function renderDetailBalances() {
   var p = state.currentPool; if (!p) return;
-  document.getElementById("depBalA").textContent = "Balance: " + (state.pubkey ? fmtNum(balOf(p.mintA.address)) + " " + p.mintA.symbol : "—");
-  document.getElementById("depBalB").textContent = "Balance: " + (state.pubkey ? fmtNum(balOf(p.mintB.address)) + " " + p.mintB.symbol : "—");
+  document.getElementById("depBalA").textContent = "Balance: " + balDisplay(p.mintA.address, p.mintA.symbol);
+  document.getElementById("depBalB").textContent = "Balance: " + balDisplay(p.mintB.address, p.mintB.symbol);
   var lp = p.lpMint ? (state.lpBalances[p.lpMint.address] || 0) : 0;
   document.getElementById("dMyLp").textContent = state.pubkey ? fmtNum(lp) + " LP" : "Connect wallet";
-  document.getElementById("wdBal").textContent = "LP balance: " + (state.pubkey ? fmtNum(lp) : "—");
+  document.getElementById("wdBal").textContent = "LP balance: " + (state.pubkey ? (state.balStatus === "error" ? "failed to load" : state.balStatus === "loading" ? "loading…" : fmtNum(lp)) : "—");
 }
 function detailTab(t) {
   state.detailTabName = t;
@@ -1404,7 +1484,7 @@ async function doDeposit() {
     var sig = out && (out.txId || out.signature || out.txid);
     setStatus("depStatus", "ok", "Deposit confirmed." + (sig ? " " + txLink(sig) : ""));
     if (sig) pushActivity("Deposit", p.mintA.symbol + " / " + p.mintB.symbol, fmtNum(amtA) + " " + p.mintA.symbol, sig);
-    refreshBalances();
+    refreshBalancesSoon();
   } catch (e) {
     setStatus("depStatus", "err", "Deposit not sent: " + (e && e.message ? e.message : e));
   }
@@ -1436,7 +1516,7 @@ async function doWithdraw() {
     var sig = out && (out.txId || out.signature || out.txid);
     setStatus("wdStatus", "ok", "Withdrawal confirmed." + (sig ? " " + txLink(sig) : ""));
     if (sig) pushActivity("Withdraw", p.mintA.symbol + " / " + p.mintB.symbol, fmtNum(lp) + " LP", sig);
-    refreshBalances();
+    refreshBalancesSoon();
   } catch (e) {
     setStatus("wdStatus", "err", "Withdrawal not sent: " + (e && e.message ? e.message : e));
   }
@@ -1456,7 +1536,14 @@ function syncSwapLabels() {
 }
 function renderSwapBalances() {
   var el = document.getElementById("swapInBal");
-  if (el) el.textContent = "Balance: " + (state.pubkey ? fmtNum(balOf(state.swapIn.mint)) + " " + state.swapIn.symbol : "—");
+  if (!el) return;
+  if (!state.pubkey) { el.textContent = "Balance: —"; return; }
+  if (state.balStatus === "error") {
+    el.innerHTML = 'Balance: <span class="balerr">failed to load</span> <button type="button" class="balretry" onclick="refreshBalances()">Retry</button>';
+    return;
+  }
+  if (state.balStatus === "loading") { el.textContent = "Balance: loading…"; return; }
+  el.textContent = "Balance: " + fmtNum(balOf(state.swapIn.mint)) + " " + state.swapIn.symbol;
 }
 function setSwapSlip(v) {
   state.swapSlip = v;
@@ -1551,7 +1638,7 @@ async function doSwap() {
     await conn().confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, "confirmed");
     setStatus("swapStatus", "ok", "Swap confirmed. " + txLink(sig));
     pushActivity("Swap", state.swapIn.symbol + " → " + state.swapOut.symbol, document.getElementById("swapInAmt").value + " " + state.swapIn.symbol, sig);
-    refreshBalances(); fetchQuote();
+    refreshBalancesSoon(); fetchQuote();
   } catch (e) {
     setStatus("swapStatus", "err", "Swap not sent: " + (e && e.message ? e.message : e));
   }
@@ -1746,6 +1833,12 @@ document.addEventListener("click", function(e) {
   renderPopChips(); syncSwapLabels(); updateActionButtons();
   loadPrices(); loadPools(); aggQuote();
   setInterval(loadPrices, 60000);
+  /* Balances stay fresh on their own: a 20s poll while the wallet is
+     connected, plus a refresh whenever the tab comes back into view —
+     no disconnect or page reload needed after a swap or a transfer. */
+  setInterval(function() { if (state.pubkey && !document.hidden) refreshBalances(); }, 20000);
+  document.addEventListener("visibilitychange", function() { if (!document.hidden && state.pubkey) refreshBalances(); });
+  window.addEventListener("focus", function() { if (state.pubkey) refreshBalances(); });
 })();
 </script>
 </body>
